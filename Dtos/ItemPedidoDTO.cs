@@ -1,12 +1,12 @@
-﻿using System;
-
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 public class ItemPedidoDTO
 {
     [Required(ErrorMessage = "Campo obrigatório")]
-    public int IdPedido { get; set; }
+    public Pedido Pedido { get; set; }
 
     [Required(ErrorMessage = "Campo obrigatório")]
-    public int IdProduto { get; set; }
+    public Produto Produto { get; set; }
 
     [Required(ErrorMessage = "Campo obrigatório")]
     [Range(1, int.MaxValue, ErrorMessage = "Quantidade deve ser ao menos 1")]
