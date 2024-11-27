@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 public class PedidoDTO
 {
@@ -11,5 +12,5 @@ public class PedidoDTO
     public decimal Total { get; set; }
 
     [Required(ErrorMessage = "Campo obrigatório")]
-    public int IdCliente { get; set; }
+    public Cliente Cliente { get; set; }
 }

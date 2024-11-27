@@ -7,6 +7,5 @@ public class Fornecedor
     public string Telefone { get; set; }
     public string Cidade { get; set; }
     public string Endereco { get; set; }
-    public ICollection<ProdutoFornecedor> ProdutosFornecidos { get; set; }
 }
 
