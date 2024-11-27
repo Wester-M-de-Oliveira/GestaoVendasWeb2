@@ -1,18 +1,17 @@
-﻿using System;
+﻿using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 
 public class FornecedorDTO
 {
     [Required(ErrorMessage = "Campo obrigatório")]
-    [MinLength(3, ErrorMessage = "Nome deve ter no mínimo 3 caracteres")]
-    public string Nome { get; set; }
+    public int Id { get; set; }
+
+    [StringLength(200, ErrorMessage = "Razão Social pode ter no máximo 200 caracteres")]
+    public string? RazaoSocial { get; set; }
+
+    [StringLength(100, ErrorMessage = "Nome Fantasia pode ter no máximo 100 caracteres")]
+    public string? NomeFantasia { get; set; }
 
     [Required(ErrorMessage = "Campo obrigatório")]
-    [Phone(ErrorMessage = "Número de telefone inválido")]
-    public string Telefone { get; set; }
-
-    [Required(ErrorMessage = "Campo obrigatório")]
-    public string Cidade { get; set; }
-
-    [Required(ErrorMessage = "Campo obrigatório")]
-    public string Endereco { get; set; }
+    public int IdEndereco { get; set; }
 }
