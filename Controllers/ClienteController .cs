@@ -1,4 +1,11 @@
-﻿
+﻿using GestaoVendasWeb2.DataContexts;
+using GestaoVendasWeb2.Dtos;
+using GestaoVendasWeb2.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+
+namespace GestaoVendasWeb2.Controllers 
+{
     [Route("clientes")]
     [ApiController]
     public class ClienteController : Controller
@@ -99,3 +106,4 @@
             }
         }
     }
+}

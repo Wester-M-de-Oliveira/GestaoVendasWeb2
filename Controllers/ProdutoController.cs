@@ -1,102 +1,109 @@
-﻿using System;
+﻿using GestaoVendasWeb2.DataContexts;
+using GestaoVendasWeb2.Dtos;
+using GestaoVendasWeb2.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
-[Route("produtos")]
-[ApiController]
-public class ProdutoController : Controller
+namespace GestaoVendasWeb2.Controllers 
 {
-    [HttpGet]
-    public IActionResult Get()
+    [Route("produtos")]
+    [ApiController]
+    public class ProdutoController : Controller
     {
-        try
+        [HttpGet]
+        public IActionResult Get()
         {
-            List<Produto> produtos = new ProdutoDAO().List();
-            return Ok(produtos);
-        }
-        catch (Exception)
-        {
-            return Problem("Erro ao processar a solicitação.");
-        }
-    }
-
-    [HttpGet("{id}")]
-    public IActionResult GetById(int id)
-    {
-        try
-        {
-            var produto = new ProdutoDAO().GetById(id);
-
-            if (produto == null) return NotFound();
-
-            return Ok(produto);
-        }
-        catch (Exception)
-        {
-            return Problem("Erro ao processar a solicitação.");
-        }
-    }
-
-    [HttpPost]
-    public IActionResult Post([FromBody] ProdutoDTO item)
-    {
-        var produto = new Produto
-        {
-            Nome = item.Nome,
-            Preco = item.Preco,
-            QuantidadeEstoque = item.QuantidadeEstoque,
-            DataValidade = item.DataValidade
-        };
-
-        try
-        {
-            var dao = new ProdutoDAO();
-            produto.IdProduto = dao.Insert(produto);
-        }
-        catch (Exception ex)
-        {
-            return BadRequest(ex.Message);
+            try
+            {
+                List<Produto> produtos = new ProdutoDAO().List();
+                return Ok(produtos);
+            }
+            catch (Exception)
+            {
+                return Problem("Erro ao processar a solicitação.");
+            }
         }
 
-        return Created("", produto);
-    }
-
-    [HttpPut("{id}")]
-    public IActionResult Put(int id, [FromBody] ProdutoDTO item)
-    {
-        try
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
         {
-            var produto = new ProdutoDAO().GetById(id);
-            if (produto == null) return NotFound();
+            try
+            {
+                var produto = new ProdutoDAO().GetById(id);
 
-            produto.Nome = item.Nome;
-            produto.Preco = item.Preco;
-            produto.QuantidadeEstoque = item.QuantidadeEstoque;
-            produto.DataValidade = item.DataValidade;
+                if (produto == null) return NotFound();
 
-            new ProdutoDAO().Update(produto);
-
-            return Ok(produto);
+                return Ok(produto);
+            }
+            catch (Exception)
+            {
+                return Problem("Erro ao processar a solicitação.");
+            }
         }
-        catch (Exception e)
+
+        [HttpPost]
+        public IActionResult Post([FromBody] ProdutoDTO item)
         {
-            return Problem(e.Message);
+            var produto = new Produto
+            {
+                Nome = item.Nome,
+                Preco = item.Preco,
+                QuantidadeEstoque = item.QuantidadeEstoque,
+                DataValidade = item.DataValidade
+            };
+
+            try
+            {
+                var dao = new ProdutoDAO();
+                produto.IdProduto = dao.Insert(produto);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+
+            return Created("", produto);
         }
-    }
 
-    [HttpDelete("{id}")]
-    public IActionResult Delete(int id)
-    {
-        try
+        [HttpPut("{id}")]
+        public IActionResult Put(int id, [FromBody] ProdutoDTO item)
         {
-            var produto = new ProdutoDAO().GetById(id);
-            if (produto == null) return NotFound();
+            try
+            {
+                var produto = new ProdutoDAO().GetById(id);
+                if (produto == null) return NotFound();
 
-            new ProdutoDAO().Delete(produto.IdProduto);
+                produto.Nome = item.Nome;
+                produto.Preco = item.Preco;
+                produto.QuantidadeEstoque = item.QuantidadeEstoque;
+                produto.DataValidade = item.DataValidade;
 
-            return Ok();
+                new ProdutoDAO().Update(produto);
+
+                return Ok(produto);
+            }
+            catch (Exception e)
+            {
+                return Problem(e.Message);
+            }
         }
-        catch (Exception e)
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(int id)
         {
-            return Problem(e.Message);
+            try
+            {
+                var produto = new ProdutoDAO().GetById(id);
+                if (produto == null) return NotFound();
+
+                new ProdutoDAO().Delete(produto.IdProduto);
+
+                return Ok();
+            }
+            catch (Exception e)
+            {
+                return Problem(e.Message);
+            }
         }
     }
 }
