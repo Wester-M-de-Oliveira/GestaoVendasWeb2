@@ -1,17 +1,16 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GestaoVendasWeb2.Models 
+namespace GestaoVendasWeb2.Models;
+[Table("venda")]
+public class Venda
 {
-    [Table("venda")]
-    public class Venda
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
 
-        [Column("data")]
-        public DateTime Data { get; set; }
+    [Column("data_venda")]
+    public DateTime Data { get; set; }
 
         [Column("valor")]
         public double Valor { get; set; }

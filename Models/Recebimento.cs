@@ -1,14 +1,14 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GestaoVendasWeb2.Models 
+namespace GestaoVendasWeb2.Models;
+
+[Table("recebimento")]
+public class Recebimento
 {
-    [Table("recebimento")]
-    public class Recebimento
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
 
         [Column("data")]
         public DateTime Data { get; set; }

@@ -1,14 +1,13 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GestaoVendasWeb2.Models 
+namespace GestaoVendasWeb2.Models;
+[Table("pagamentos")]
+public class Pagamentos
 {
-    [Table("pagamentos")]
-    public class Pagamentos
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
 
         [Column("data")]
         public DateTime Data { get; set; }
@@ -28,7 +27,6 @@ namespace GestaoVendasWeb2.Models
         [Column("despesa_id")]
         public Despesas Despesas { get; set; }
 
-        [ForeignKey("funcionario_id")]
-        public Funcionario Funcionario { get; set; }
-    }
+    [ForeignKey("funcionario_id")]
+    public Funcionario Funcionario { get; set; }
 }

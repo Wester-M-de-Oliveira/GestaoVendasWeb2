@@ -1,15 +1,14 @@
-using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GestaoVendasWeb2.Models 
+namespace GestaoVendasWeb2.Models;
+
+[Table("produto")]
+public class Produto
 {
-    [Table("produto")]
-    public class Produto
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
 
         [Column("nome")]
         public string Nome { get; set; }
