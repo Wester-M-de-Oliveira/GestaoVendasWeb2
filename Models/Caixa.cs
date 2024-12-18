@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+namespace GestaoVendasWeb2.Models;
+
 [Table("caixa")]
 public class Caixa
 {
@@ -30,5 +32,5 @@ public class Caixa
     public double SaldoFinal { get; set; }
 
     [ForeignKey("status")]
-    public bool Status { get; set; }
+    public string Status { get; set; }
 }

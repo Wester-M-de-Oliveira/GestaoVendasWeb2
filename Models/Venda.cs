@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+namespace GestaoVendasWeb2.Models;
 [Table("venda")]
 public class Venda
 {
@@ -8,7 +9,7 @@ public class Venda
     [Column("id")]
     public int Id { get; set; }
 
-    [Column("data")]
+    [Column("data_venda")]
     public DateTime Data { get; set; }
 
     [Column("valor")]

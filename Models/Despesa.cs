@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+namespace GestaoVendasWeb2.Models;
+
 [Table("despesa")]
-public class Despesa
+public class Despesas
 {
     [Key]
     [Column("id")]
@@ -23,3 +25,4 @@ public class Despesa
     [ForeignKey("fornecedor_id")]
     public Fornecedor Fornecedor { get; set; }
 }
+
