@@ -1,18 +1,22 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GestaoVendasWeb2.Models 
+namespace GestaoVendasWeb2.Models;
+public class Cidade
 {
-    public class Cidade
-    {
-        [Key]
-        [Column("id")]
-        public int Id { get; set; }
-        [Column("nome")]
-        public string Nome { get; set; }
-        [ForeignKey("estado_id")]
-        public int IdEstado { get; set; }
-        [Column("estado")]
-        public Estado Estado { get; set; }
-    }
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
+
+    [Required]
+    [Column("nome", TypeName = "varchar(200)")]
+    public string Nome { get; set; }
+
+    [ForeignKey("estado_id")]
+    [Column("estado_id")]
+    public int EstadoId { get; set; }
+
+    public Estado Estado { get; set; }
+    public ICollection<Endereco> Enderecos { get; set; }
+
 }

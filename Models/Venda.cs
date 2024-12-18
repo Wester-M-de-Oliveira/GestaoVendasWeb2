@@ -12,22 +12,28 @@ public class Venda
     [Column("data_venda")]
     public DateTime Data { get; set; }
 
-        [Column("valor")]
-        public double Valor { get; set; }
+    [Column("valor")]
+    public double Valor { get; set; }
 
-        [Column("desconto")]
-        public double Desconto { get; set; }
+    [Column("desconto")]
+    public double Desconto { get; set; }
 
-        [Column("forma_pag")]
-        public string FormaPag { get; set; }
+    [Column("forma_pag")]
+    public string FormaPag { get; set; }
 
-        [ForeignKey("quant_parcelas")]
-        public int QuantParcelas { get; set; }
+    [ForeignKey("quant_parcelas")]
+    public int QuantParcelas { get; set; }
 
-        [ForeignKey("funcionario_id")]
-        public Funcionario Funcionario { get; set; }
+    [ForeignKey("funcionario_id")]
+    [Column("funcionario_id")]
+    public Funcionario FuncionarioId { get; set; }
 
-        [ForeignKey("cliente_id")]
-        public Cliente Cliente { get; set; }
-    }
+    [ForeignKey("cliente_id")]
+    [Column("cliente_id")]
+    public Cliente ClienteId { get; set; }
+
+    public Funcionario Funcionario { get; set; }
+    public Cliente Cliente { get; set; }
+    public ICollection<ItensVenda> ItensVendas { get; set; }
+    public ICollection<Recebimento> Recebimentos { get; set; }
 }

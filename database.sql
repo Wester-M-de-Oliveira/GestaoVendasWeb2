@@ -7,7 +7,7 @@ create table Estado (
 create table cidade (
     id int not null primary key auto_increment,
     nome varchar(200) not null,
-    id_estado int,
+    estado_id int,
     foreign key (estado_id) references Estado (id)
 );
 
