@@ -1,8 +1,67 @@
+create table Estado (
+    id int not null primary key auto_increment,
+    nome varchar(200) not null,
+    sigla varchar(2)
+);
+
+create table cidade (
+    id int not null primary key auto_increment,
+    nome varchar(200) not null,
+    id_estado int,
+    foreign key (estado_id) references Estado (id)
+);
+
+create table Endereco (
+    id integer not null primary key auto_increment,
+    rua varchar(300),
+    numero integer,
+    bairro varchar(100),
+    cidade_id int not null,
+    foreign key (cidade_id) references Cidade (id)
+);
+
+create table Cliente (
+    id integer not null primary key auto_increment,
+    nome varchar(200) not null,
+    estado_civil varchar(50),
+    cpf varchar(20) not null,
+    rg varchar(30),
+    data_nasc date,
+    renda_familiar double,
+    telefone varchar(50),
+    sexo varchar(20) not null,
+    celular varchar(50) not null,
+    endereco_id integer not null,
+    foreign key (endereco_id) references Endereco (id)
+);
+
+create table Funcionario (
+    id integer not null primary key auto_increment,
+    nome varchar(200) not null,
+    cpf varchar(20) not null,
+    rg varchar(20),
+    data_nasc date,
+    salario double not null,
+    telefone varchar(50),
+    funcao varchar(50) not null,
+    sexo varchar(20) not null,
+    endereco_id integer not null,
+    foreign key (endereco_id) references Endereco (id)
+);
+
+create table Fornecedor (
+    id integer not null primary key auto_increment,
+    razao_social varchar(200),
+    nome_fantasia varchar(100),
+    endereco_id integer not null,
+    foreign key (endereco_id) references Endereco (id)
+);
+
 create table Produto (
     id int primary key not null auto_increment,
     nome varchar(50) not null,
     descricao varchar(50) not null,
-    preco float,
+    preco_compra double,
     valor_prod double,
     quantidade_estoque int,
     data_validade date
@@ -22,7 +81,7 @@ create table Compra (
 create table Itens_Compra (
     id int not null primary key auto_increment,
     quantidade int not null,
-    valor float not null,
+    valor double not null,
     produto_id int not null,
     compra_id int not null,
     foreign key (produto_id) references Produto (id),
@@ -89,7 +148,7 @@ create table Despesas (
 create table Pagamentos (
     id int not null primary key auto_increment,
     data date,
-    valor float,
+    valor double,
     forma_pag varchar(100),
     caixa_id int,
     compra_id int,
