@@ -9,33 +9,38 @@ public class Pagamento
     [Column("id")]
     public int Id { get; set; }
 
+    [Required]
     [Column("data")]
-    public DateTime Data { get; set; }
+    public DateTime Data { get; set; } = DateTime.Now;
 
+    [Required]
     [Column("valor")]
-    public double Valor { get; set; }
+    [Range(0.01, double.MaxValue)]
+    public decimal Valor { get; set; }
 
+    [Required]
     [Column("forma_pag")]
+    [StringLength(50)]
     public string FormaPag { get; set; }
 
-    [ForeignKey("caixa_id")]
+    [Required]
     [Column("caixa_id")]
-    public Caixa CaixaId { get; set; }
+    public int CaixaId { get; set; }
 
-    [ForeignKey("compra_id")]
+    [Required]
     [Column("compra_id")]
-    public Compra CompraId { get; set; }
+    public int CompraId { get; set; }
 
-    [ForeignKey("despesa_id")]
+    [Required]
     [Column("despesa_id")]
-    public Despesa DespesaId { get; set; }
+    public int DespesaId { get; set; }
 
-    [ForeignKey("funcionario_id")]
+    [Required]
     [Column("funcionario_id")]
-    public Funcionario FuncionarioId { get; set; }
+    public int FuncionarioId { get; set; }
 
-    public Caixa Caixa { get; set; }
-    public Compra Compra { get; set; }
-    public Despesa Despesa { get; set; }
-    public Funcionario Funcionario { get; set; }
+    public virtual Caixa Caixa { get; set; }
+    public virtual Compra Compra { get; set; }
+    public virtual Despesa Despesa { get; set; }
+    public virtual Funcionario Funcionario { get; set; }
 }
