@@ -11,7 +11,7 @@ public class ItensVenda
     public int Id { get; set; }
 
     [Column("quantidade")]
-    public int quantidade { get; set; }
+    public int Quantidade { get; set; }
 
     [Column("valor")]
     public double Valor { get; set; }

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
+using GestaoVendasWeb2.Models;
 
 namespace GestaoVendasWeb2.Dtos
 {
@@ -26,7 +27,7 @@ namespace GestaoVendasWeb2.Dtos
         public DateTime? DataNasc { get; set; }
 
         [Range(0, double.MaxValue, ErrorMessage = "Renda familiar deve ser positiva")]
-        public float? RendaFamiliar { get; set; }
+        public double? RendaFamiliar { get; set; }
 
         [StringLength(50, ErrorMessage = "Telefone pode ter no máximo 50 caracteres")]
         public string? Telefone { get; set; }
@@ -40,6 +41,6 @@ namespace GestaoVendasWeb2.Dtos
         public string Celular { get; set; }
 
         [Required(ErrorMessage = "Campo obrigatório")]
-        public int IdEndereco { get; set; }
+        public Endereco Endereco { get; set; }
     }
 }

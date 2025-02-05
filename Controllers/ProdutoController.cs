@@ -8,14 +8,21 @@ namespace GestaoVendasWeb2.Controllers
 {
     [Route("produtos")]
     [ApiController]
-    public class ProdutoController : Controller
+    public class ProdutoController : ControllerBase
     {
+        private readonly AppDbContext _context;
+
+        public ProdutoController(AppDbContext context)
+        {
+            _context = context;
+        }
+
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
             try
             {
-                List<Produto> produtos = new ProdutoDAO().List();
+                var produtos = await _context.Produtos.ToListAsync();
                 return Ok(produtos);
             }
             catch (Exception)
@@ -25,14 +32,12 @@ namespace GestaoVendasWeb2.Controllers
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
             try
             {
-                var produto = new ProdutoDAO().GetById(id);
-
+                var produto = await _context.Produtos.FindAsync(id);
                 if (produto == null) return NotFound();
-
                 return Ok(produto);
             }
             catch (Exception)
@@ -42,11 +47,12 @@ namespace GestaoVendasWeb2.Controllers
         }
 
         [HttpPost]
-        public IActionResult Post([FromBody] ProdutoDTO item)
+        public async Task<IActionResult> Post([FromBody] ProdutoDTO item)
         {
             var produto = new Produto
             {
                 Nome = item.Nome,
+                Descricao = item.Descricao,
                 Preco = item.Preco,
                 QuantidadeEstoque = item.QuantidadeEstoque,
                 DataValidade = item.DataValidade
@@ -54,32 +60,31 @@ namespace GestaoVendasWeb2.Controllers
 
             try
             {
-                var dao = new ProdutoDAO();
-                produto.IdProduto = dao.Insert(produto);
+                _context.Produtos.Add(produto);
+                await _context.SaveChangesAsync();
+                return Created($"produtos/{produto.Id}", produto);
             }
             catch (Exception ex)
             {
                 return BadRequest(ex.Message);
             }
-
-            return Created("", produto);
         }
 
         [HttpPut("{id}")]
-        public IActionResult Put(int id, [FromBody] ProdutoDTO item)
+        public async Task<IActionResult> Put(int id, [FromBody] ProdutoDTO item)
         {
             try
             {
-                var produto = new ProdutoDAO().GetById(id);
+                var produto = await _context.Produtos.FindAsync(id);
                 if (produto == null) return NotFound();
 
                 produto.Nome = item.Nome;
+                produto.Descricao = item.Descricao;
                 produto.Preco = item.Preco;
                 produto.QuantidadeEstoque = item.QuantidadeEstoque;
                 produto.DataValidade = item.DataValidade;
 
-                new ProdutoDAO().Update(produto);
-
+                await _context.SaveChangesAsync();
                 return Ok(produto);
             }
             catch (Exception e)
@@ -89,15 +94,15 @@ namespace GestaoVendasWeb2.Controllers
         }
 
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
             try
             {
-                var produto = new ProdutoDAO().GetById(id);
+                var produto = await _context.Produtos.FindAsync(id);
                 if (produto == null) return NotFound();
 
-                new ProdutoDAO().Delete(produto.IdProduto);
-
+                _context.Produtos.Remove(produto);
+                await _context.SaveChangesAsync();
                 return Ok();
             }
             catch (Exception e)

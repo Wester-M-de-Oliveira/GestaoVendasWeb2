@@ -34,7 +34,6 @@ public class Pagamento
     [Column("funcionario_id")]
     public Funcionario FuncionarioId { get; set; }
 
-
     public Caixa Caixa { get; set; }
     public Compra Compra { get; set; }
     public Despesa Despesa { get; set; }
