@@ -1,34 +1,47 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace GestaoVendasWeb2.Models;
-
-[Table("recebimento")]
-public class Recebimento
+namespace GestaoVendasWeb2.Models
 {
-    [Key]
-    [Column("id")]
-    public int Id { get; set; }
+    [Table("recebimento")]
+    public class Recebimento
+    {
+        [Key]
+        [Column("id")]
+        public int Id { get; set; }
 
-    [Column("data")]
-    public DateTime Data { get; set; }
+        [Required]
+        [Column("data")]
+        public DateTime Data { get; set; } = DateTime.Now;
 
-    [Column("valor")]
-    public double Valor { get; set; }
+        [Required]
+        [Column("valor")]
+        [Range(0.01, double.MaxValue)]
+        public decimal Valor { get; set; }
 
-    [ForeignKey("caixa_id")]
-    [Column("caixa_id")]
-    public Caixa CaixaId { get; set; }
+        [Required]
+        [Column("caixa_id")]
+        public int CaixaId { get; set; }
 
-    [ForeignKey("venda_id")]
-    [Column("venda_id")]
-    public Venda VendaId { get; set; }
+        [Required]
+        [Column("venda_id")]
+        public int VendaId { get; set; }
 
-    [ForeignKey("funcionario_id")]
-    [Column("funcionario_id")]
-    public Funcionario FuncionarioId { get; set; }
+        [Required]
+        [Column("funcionario_id")]
+        public int FuncionarioId { get; set; }
 
-    public Caixa Caixa { get; set; }
-    public Venda Venda { get; set; }
-    public Funcionario Funcionario { get; set; }
+        public virtual Caixa Caixa { get; set; }
+        public virtual Venda Venda { get; set; }
+        public virtual Funcionario Funcionario { get; set; }
+
+        public void ValidarRecebimento()
+        {
+            if (Valor <= 0)
+                throw new InvalidOperationException("O valor do recebimento deve ser maior que zero.");
+            
+            if (Data > DateTime.Now)
+                throw new InvalidOperationException("A data do recebimento não pode ser futura.");
+        }
+    }
 }
