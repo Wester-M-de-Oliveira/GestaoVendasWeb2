@@ -45,7 +45,7 @@ namespace GestaoVendasWeb2.Controllers
                     Pagamentos = c.Pagamentos.Select(p => new PagamentoDTO
                     {
                         Id = p.Id,
-                        Valor = p.Valor,
+                        Valor = (double)p.Valor,
                         Data = p.Data,
                         FormaPag = p.FormaPag
                     }).ToList()
