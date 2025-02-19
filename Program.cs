@@ -16,7 +16,6 @@ builder.Services.AddControllers().AddJsonOptions(x =>
     x.JsonSerializerOptions.WriteIndented = true;
 });
 
-<<<<<<< HEAD
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -33,9 +32,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
-=======
 builder.Services.AddAutoMapper(typeof(MappingProfile));
->>>>>>> f904d8dcc1aafd001e7555715ffb89e66f9e2fa9
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -43,8 +40,8 @@ builder.Services.AddSwaggerGen(options =>
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Version = "v1",
-        Title = "Gestão Vendas API",
-        Description = "API de consumo para aplicação Gestão de Vendas"
+        Title = "GestaoVendasWeb",
+        Description = "API de consumo para aplicação Vendas"
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
