@@ -92,27 +92,58 @@ namespace GestaoVendasWeb2.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] ClienteDTO item)
+        public async Task<IActionResult> Put(int id, [FromBody] UpdateClienteDTO item)
         {
             try
             {
-                var cliente = await _context.Clientes.Include(c => c.Endereco).FirstOrDefaultAsync(c => c.Id == id);
-                if (cliente == null) return NotFound();
+                var cliente = await _context.Clientes.Include(c => c.Endereco)
+                        .ThenInclude(e => e.Cidade)
+                        .ThenInclude(c => c.Estado)
+                        .FirstOrDefaultAsync(c => c.Id == id);
 
-                cliente.Nome = item.Nome;
-                cliente.EstadoCivil = item.EstadoCivil;
-                cliente.CPF = item.Cpf;
-                cliente.RG = item.Rg;
-                cliente.DataNascimento = item.DataNasc;
-                cliente.RendaFamiliar = (float?)item.RendaFamiliar;
-                cliente.Telefone = item.Telefone;
-                cliente.Sexo = item.Sexo;
-                cliente.Celular = item.Celular;
+                if (cliente == null) return NotFound("Cliente não encontrado.");
 
-                cliente.Endereco.Rua = item.Endereco.Rua;
-                cliente.Endereco.Numero = item.Endereco.Numero;
-                cliente.Endereco.Bairro = item.Endereco.Bairro;
-                cliente.Endereco.CidadeId = item.Endereco.CidadeId;
+                if (!string.IsNullOrEmpty(item.Nome))
+                    cliente.Nome = item.Nome;
+
+                if (!string.IsNullOrEmpty(item.EstadoCivil))
+                    cliente.EstadoCivil = item.EstadoCivil;
+
+                if (!string.IsNullOrEmpty(item.Cpf))
+                    cliente.CPF = item.Cpf;
+
+                if (!string.IsNullOrEmpty(item.Rg))
+                    cliente.RG = item.Rg;
+
+                if (item.DataNasc.HasValue)
+                    cliente.DataNascimento = item.DataNasc;
+
+                if (item.RendaFamiliar.HasValue)
+                    cliente.RendaFamiliar = (float?)item.RendaFamiliar;
+
+                if (!string.IsNullOrEmpty(item.Telefone))
+                    cliente.Telefone = item.Telefone;
+
+                if (!string.IsNullOrEmpty(item.Sexo))
+                    cliente.Sexo = item.Sexo;
+
+                if (!string.IsNullOrEmpty(item.Celular))
+                    cliente.Celular = item.Celular;
+
+                if (item.Endereco != null)
+                {
+                    if (!string.IsNullOrEmpty(item.Endereco.Rua))
+                        cliente.Endereco.Rua = item.Endereco.Rua;
+
+                    if (item.Endereco.Numero.HasValue && item.Endereco.Numero > 0)
+                        cliente.Endereco.Numero = item.Endereco.Numero.Value;
+
+                    if (!string.IsNullOrEmpty(item.Endereco.Bairro))
+                        cliente.Endereco.Bairro = item.Endereco.Bairro;
+
+                    if (item.Endereco.CidadeId.HasValue && item.Endereco.CidadeId > 0)
+                        cliente.Endereco.CidadeId = item.Endereco.CidadeId.Value;
+                }
 
                 _context.Clientes.Update(cliente);
                 await _context.SaveChangesAsync();
@@ -121,7 +152,7 @@ namespace GestaoVendasWeb2.Controllers
             }
             catch (Exception e)
             {
-                return Problem(e.Message);
+                return Problem($"Erro ao atualizar cliente: {e.Message}");
             }
         }
 

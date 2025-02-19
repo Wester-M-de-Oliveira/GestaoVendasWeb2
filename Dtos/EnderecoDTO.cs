@@ -16,4 +16,13 @@ namespace GestaoVendasWeb2.Dtos
         [Required(ErrorMessage = "CidadeId é obrigatório")]
         public int CidadeId { get; set; }
     }
+
+    public class UpdateEnderecoDTO
+    {
+        public string? Rua { get; set; }
+        public int? Numero { get; set; }
+        public string? Bairro { get; set; }
+        public int? CidadeId { get; set; }
+    }
+
 }
