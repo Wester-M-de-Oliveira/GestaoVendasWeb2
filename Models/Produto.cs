@@ -6,9 +6,9 @@ namespace GestaoVendasWeb2.Models;
 [Table("produto")]
 public class Produto
 {
-[Key]
-[Column("id")]
-public int Id { get; set; }
+    [Key]
+    [Column("id")]
+    public int Id { get; set; }
 
     [Column("nome")]
     public string Nome { get; set; }

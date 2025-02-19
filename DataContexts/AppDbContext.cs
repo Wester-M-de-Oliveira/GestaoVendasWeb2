@@ -72,12 +72,14 @@ namespace GestaoVendasWeb2.DataContexts
             modelBuilder.Entity<ItensCompra>()
                 .HasOne(ic => ic.Compra)
                 .WithMany(c => c.ItensCompras)
-                .HasForeignKey(ic => ic.CompraId);
+                .HasForeignKey(ic => ic.CompraId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<ItensCompra>()
                 .HasOne(ic => ic.Produto)
                 .WithMany(p => p.ItensCompras)
-                .HasForeignKey(ic => ic.ProdutoId);
+                .HasForeignKey(ic => ic.ProdutoId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // Relação Venda -> Cliente e Funcionario
             modelBuilder.Entity<Venda>()

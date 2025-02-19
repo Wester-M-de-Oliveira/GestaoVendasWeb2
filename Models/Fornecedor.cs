@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GestaoVendasWeb2.Models 
 {
+    [Table("fornecedor")]
     public class Fornecedor
     {
         [Key]

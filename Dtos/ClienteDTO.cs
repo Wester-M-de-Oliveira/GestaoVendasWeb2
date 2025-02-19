@@ -7,9 +7,6 @@ namespace GestaoVendasWeb2.Dtos
     public class ClienteDTO
     {
         [Required(ErrorMessage = "Campo obrigatório")]
-        public int Id { get; set; }
-
-        [Required(ErrorMessage = "Campo obrigatório")]
         [MinLength(1, ErrorMessage = "Nome deve ter no mínimo 1 caractere")]
         [MaxLength(200, ErrorMessage = "Nome pode ter no máximo 200 caracteres")]
         public string Nome { get; set; }
@@ -40,7 +37,7 @@ namespace GestaoVendasWeb2.Dtos
         [StringLength(50, ErrorMessage = "Celular pode ter no máximo 50 caracteres")]
         public string Celular { get; set; }
 
-        [Required(ErrorMessage = "Campo obrigatório")]
-        public Endereco Endereco { get; set; }
+        [Required(ErrorMessage = "O endereço é obrigatório")]
+        public EnderecoDTO Endereco { get; set; }
     }
 }

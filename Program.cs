@@ -1,6 +1,8 @@
 using GestaoVendasWeb2.DataContexts;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using AutoMapper;
+using GestaoVendasWeb2.Profiles;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,10 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers().AddJsonOptions(x =>
 {
-    x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    x.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     x.JsonSerializerOptions.WriteIndented = true;
 });
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+builder.Services.AddAutoMapper(typeof(MappingProfile));
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
