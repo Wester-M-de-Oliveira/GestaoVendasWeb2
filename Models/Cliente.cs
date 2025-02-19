@@ -1,8 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace GestaoVendasWeb2.Models 
 {
+    [Table("cliente")]
     public class Cliente
     {
         [Key]
@@ -39,9 +41,9 @@ namespace GestaoVendasWeb2.Models
         [ForeignKey("endereco_id")]
         [Column("endereco_id")]
         public int EnderecoId { get; set; }
-
         public Endereco Endereco { get; set; }
 
+        [JsonIgnore]
         public ICollection<Venda> Vendas { get; set; }
     }
 }

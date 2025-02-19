@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-using GestaoVendasWeb2.Dtos;
 using GestaoVendasWeb2.Models;
+using GestaoVendasWeb2.Dtos;
 
 public class CompraDTO
 {
@@ -48,8 +48,8 @@ public class ItensCompraDTO
     public double Valor { get; set; }
 
     [Required(ErrorMessage = "Produto é obrigatório")]
-    public Produto ProdutoId { get; set; }
+    public int ProdutoId { get; set; }
 
     [Required(ErrorMessage = "Compra é obrigatória")]
-    public Compra CompraId { get; set; }
+    public int CompraId { get; set; }
 }

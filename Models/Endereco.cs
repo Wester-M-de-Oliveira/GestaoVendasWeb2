@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace GestaoVendasWeb2.Models;
+[Table("endereco")]
 public class Endereco
 {
     [Key]
@@ -20,11 +22,15 @@ public class Endereco
     [ForeignKey("cidade_id")]
     [Column("cidade_id")]
     public int CidadeId { get; set; }
-
     public Cidade Cidade { get; set; }
 
+    [JsonIgnore]
     public ICollection<Cliente> Clientes { get; set; }
+
+    [JsonIgnore]
     public ICollection<Funcionario> Funcionarios { get; set; }
+
+    [JsonIgnore]
     public ICollection<Fornecedor> Fornecedores { get; set; }
 
 }

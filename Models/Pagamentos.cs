@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GestaoVendasWeb2.Models;
-[Table("pagamentos")]
+[Table("pagamento")]
 public class Pagamento
 {
     [Key]

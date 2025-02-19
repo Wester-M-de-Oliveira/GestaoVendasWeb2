@@ -18,11 +18,11 @@ public class ItensVenda
 
     [ForeignKey("produto_id")]
     [Column("produto_id")]
-    public Produto ProdutoId { get; set; }
+    public int ProdutoId { get; set; }
 
     [ForeignKey("venda_id")]
     [Column("venda_id")]
-    public Venda VendaId { get; set; }
+    public int VendaId { get; set; }
 
     public Produto Produto { get; set; }
     public Venda Venda { get; set; }

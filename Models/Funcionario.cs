@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GestaoVendasWeb2.Models 
 {
+    [Table("funcionario")]
     public class Funcionario
     {
         [Key]

@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GestaoVendasWeb2.Models;
+[Table("cidade")]
 public class Cidade
 {
     [Key]

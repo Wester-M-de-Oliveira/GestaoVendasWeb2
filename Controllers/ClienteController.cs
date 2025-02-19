@@ -17,7 +17,11 @@ namespace GestaoVendasWeb2.Controllers
         {
             try
             {
-                var clientes = await _context.Clientes.Include(c => c.Endereco).ToListAsync();
+                var clientes = await _context.Clientes
+                    .Include(c => c.Endereco)
+                        .ThenInclude(e => e.Cidade)
+                            .ThenInclude(c => c.Estado)
+                    .ToListAsync();
                 return Ok(clientes);
             }
             catch (Exception)
@@ -46,14 +50,21 @@ namespace GestaoVendasWeb2.Controllers
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] ClienteDTO item)
         {
-            var endereco = new Endereco {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var endereco = new Endereco
+            {
                 Rua = item.Endereco.Rua,
                 Numero = item.Endereco.Numero,
                 Bairro = item.Endereco.Bairro,
-                Cidade = item.Endereco.Cidade,
+                CidadeId = item.Endereco.CidadeId
             };
 
-            var cliente = new Cliente {
+            var cliente = new Cliente
+            {
                 Nome = item.Nome,
                 EstadoCivil = item.EstadoCivil,
                 CPF = item.Cpf,
@@ -68,13 +79,13 @@ namespace GestaoVendasWeb2.Controllers
 
             try
             {
-            _context.Enderecos.Add(endereco);
-            _context.Clientes.Add(cliente);
-            await _context.SaveChangesAsync();
+                _context.Enderecos.Add(endereco);
+                _context.Clientes.Add(cliente);
+                await _context.SaveChangesAsync();
             }
             catch (Exception ex)
             {
-            return BadRequest(ex.Message);
+                return BadRequest(new { message = "Erro ao salvar cliente", erro = ex.Message });
             }
 
             return CreatedAtAction(nameof(GetById), new { id = cliente.Id }, cliente);
@@ -85,32 +96,32 @@ namespace GestaoVendasWeb2.Controllers
         {
             try
             {
-            var cliente = await _context.Clientes.Include(c => c.Endereco).FirstOrDefaultAsync(c => c.Id == id);
-            if (cliente == null) return NotFound();
+                var cliente = await _context.Clientes.Include(c => c.Endereco).FirstOrDefaultAsync(c => c.Id == id);
+                if (cliente == null) return NotFound();
 
-            cliente.Nome = item.Nome;
-            cliente.EstadoCivil = item.EstadoCivil;
-            cliente.CPF = item.Cpf;
-            cliente.RG = item.Rg;
-            cliente.DataNascimento = item.DataNasc;
-            cliente.RendaFamiliar = (float?)item.RendaFamiliar;
-            cliente.Telefone = item.Telefone;
-            cliente.Sexo = item.Sexo;
-            cliente.Celular = item.Celular;
+                cliente.Nome = item.Nome;
+                cliente.EstadoCivil = item.EstadoCivil;
+                cliente.CPF = item.Cpf;
+                cliente.RG = item.Rg;
+                cliente.DataNascimento = item.DataNasc;
+                cliente.RendaFamiliar = (float?)item.RendaFamiliar;
+                cliente.Telefone = item.Telefone;
+                cliente.Sexo = item.Sexo;
+                cliente.Celular = item.Celular;
 
-            cliente.Endereco.Rua = item.Endereco.Rua;
-            cliente.Endereco.Numero = item.Endereco.Numero;
-            cliente.Endereco.Bairro = item.Endereco.Bairro;
-            cliente.Endereco.Cidade = item.Endereco.Cidade;
+                cliente.Endereco.Rua = item.Endereco.Rua;
+                cliente.Endereco.Numero = item.Endereco.Numero;
+                cliente.Endereco.Bairro = item.Endereco.Bairro;
+                cliente.Endereco.CidadeId = item.Endereco.CidadeId;
 
-            _context.Clientes.Update(cliente);
-            await _context.SaveChangesAsync();
+                _context.Clientes.Update(cliente);
+                await _context.SaveChangesAsync();
 
-            return Ok(cliente);
+                return Ok(cliente);
             }
             catch (Exception e)
             {
-            return Problem(e.Message);
+                return Problem(e.Message);
             }
         }
 
