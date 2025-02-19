@@ -4,12 +4,8 @@ using GestaoVendasWeb2.Models;
 
 namespace GestaoVendasWeb2.Dtos
 {
-    public class LoginDto
+    public class ClienteDTO
     {
-<<<<<<< HEAD
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-=======
         [Required(ErrorMessage = "Campo obrigatório")]
         [MinLength(1, ErrorMessage = "Nome deve ter no mínimo 1 caractere")]
         [MaxLength(200, ErrorMessage = "Nome pode ter no máximo 200 caracteres")]
@@ -43,6 +39,5 @@ namespace GestaoVendasWeb2.Dtos
 
         [Required(ErrorMessage = "O endereço é obrigatório")]
         public EnderecoDTO Endereco { get; set; }
->>>>>>> f904d8dcc1aafd001e7555715ffb89e66f9e2fa9
     }
 }
