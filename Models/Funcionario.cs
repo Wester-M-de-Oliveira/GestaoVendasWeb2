@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace GestaoVendasWeb2.Models 
 {
@@ -37,12 +38,18 @@ namespace GestaoVendasWeb2.Models
         [ForeignKey("endereco_id")]
         [Column("endereco_id")]
         public int EnderecoId { get; set; }
-
         public Endereco Endereco { get; set; }
 
+        [JsonIgnore]
         public ICollection<Compra> Compras { get; set; }
+
+        [JsonIgnore]
         public ICollection<Venda> Vendas { get; set; }
+
+        [JsonIgnore]
         public ICollection<Recebimento> Recebimentos { get; set; }
+
+        [JsonIgnore]
         public ICollection<Pagamento> Pagamentos { get; set; }
     }
 }

@@ -54,7 +54,7 @@ namespace GestaoVendasWeb2.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<CaixaDTO>> AbrirCaixa(CaixaDTO caixaDto)
+        public async Task<ActionResult<CaixaCreateUpdateDTO>> AbrirCaixa(CaixaCreateUpdateDTO caixaDto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -72,7 +72,7 @@ namespace GestaoVendasWeb2.Controllers
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return CreatedAtAction(nameof(GetCaixa), new { id = caixa.Id }, _mapper.Map<CaixaDTO>(caixa));
+                return CreatedAtAction(nameof(GetCaixa), new { id = caixa.Id }, _mapper.Map<CaixaCreateUpdateDTO>(caixa));
             }
             catch (Exception ex)
             {
@@ -102,7 +102,7 @@ namespace GestaoVendasWeb2.Controllers
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return Ok(_mapper.Map<CaixaDTO>(caixa));
+                return Ok(_mapper.Map<CaixaCreateUpdateDTO>(caixa));
             }
             catch (Exception ex)
             {
@@ -112,11 +112,8 @@ namespace GestaoVendasWeb2.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCaixa(int id, CaixaDTO caixaDto)
+        public async Task<IActionResult> UpdateCaixa(int id, CaixaCreateUpdateDTO caixaDto)
         {
-            if (id != caixaDto.Id)
-                return BadRequest("O ID da URL não corresponde ao ID do objeto.");
-
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -133,7 +130,7 @@ namespace GestaoVendasWeb2.Controllers
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return Ok(_mapper.Map<CaixaDTO>(caixa));
+                return Ok(_mapper.Map<CaixaCreateUpdateDTO>(caixa));
             }
             catch (Exception ex)
             {

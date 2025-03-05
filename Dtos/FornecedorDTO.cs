@@ -7,9 +7,6 @@ namespace GestaoVendasWeb2.Dtos
     public class FornecedorDTO
     {
         [Required(ErrorMessage = "Campo obrigatório")]
-        public int Id { get; set; }
-
-        [Required(ErrorMessage = "Campo obrigatório")]
         [StringLength(200, ErrorMessage = "Razão Social pode ter no máximo 200 caracteres")]
         public string RazaoSocial { get; set; }
 
@@ -18,6 +15,16 @@ namespace GestaoVendasWeb2.Dtos
         public string NomeFantasia { get; set; }
 
         [Required(ErrorMessage = "Campo obrigatório")]
-        public Endereco Endereco { get; set; }
+        public EnderecoDTO Endereco { get; set; }
+    }
+    public class FornecedorUpdateDTO
+    {
+        [StringLength(200, ErrorMessage = "Razão Social pode ter no máximo 200 caracteres")]
+        public string? RazaoSocial { get; set; }
+
+        [StringLength(100, ErrorMessage = "Nome Fantasia pode ter no máximo 100 caracteres")]
+        public string? NomeFantasia { get; set; }
+
+        public UpdateEnderecoDTO? Endereco { get; set; }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace GestaoVendasWeb2.Dtos
@@ -6,6 +7,27 @@ namespace GestaoVendasWeb2.Dtos
     {
         public int Id { get; set; }
 
+        public DateTime DataAbertura { get; set; }
+
+        public DateTime? DataFechamento { get; set; }
+
+        public decimal ValorAbertura { get; set; }
+
+        public decimal ValorFechamento { get; set; }
+
+        public decimal ValorCreditos { get; set; }
+
+        public decimal ValorDebitos { get; set; }
+
+        public decimal SaldoFinal { get; set; }
+
+        public bool Status { get; set; }
+
+        public int FuncionarioId { get; set; }
+    }
+
+    public class CaixaCreateUpdateDTO
+    {
         [Required(ErrorMessage = "A data de abertura é obrigatória")]
         [Display(Name = "Data de Abertura")]
         [DataType(DataType.DateTime)]
@@ -38,8 +60,5 @@ namespace GestaoVendasWeb2.Dtos
         [Required(ErrorMessage = "O status é obrigatório")]
         [Display(Name = "Status")]
         public bool Status { get; set; }
-
-        public List<RecebimentoDTO> Recebimentos { get; set; } = new();
-        public List<PagamentoDTO> Pagamentos { get; set; } = new();
     }
 }

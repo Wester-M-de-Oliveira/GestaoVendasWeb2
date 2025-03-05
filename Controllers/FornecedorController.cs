@@ -46,49 +46,80 @@ namespace GestaoVendasWeb2.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] FornecedorDTO dto)
+        public async Task<IActionResult> Post([FromBody] FornecedorDTO item)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var endereco = new Endereco
+            {
+                Rua = item.Endereco.Rua,
+                Numero = item.Endereco.Numero,
+                Bairro = item.Endereco.Bairro,
+                CidadeId = item.Endereco.CidadeId
+            };
+            var fornecedor = new Fornecedor
+            {
+                RazaoSocial = item.RazaoSocial,
+                NomeFantasia = item.NomeFantasia,
+                Endereco = endereco
+            };
             try
             {
-                var fornecedor = new Fornecedor
-                {
-                    RazaoSocial = dto.RazaoSocial,
-                    NomeFantasia = dto.NomeFantasia,
-                    Endereco = dto.Endereco
-                };
-
+                _context.Enderecos.Add(endereco);
                 _context.Fornecedores.Add(fornecedor);
                 await _context.SaveChangesAsync();
-
-                return Created("", fornecedor);
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest(new { message = "Erro ao salvar Fornecedor", erro = ex.Message });
             }
+
+            return CreatedAtAction(nameof(GetById), new { id = fornecedor.Id }, fornecedor);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] FornecedorDTO dto)
+        public async Task<IActionResult> Put(int id, [FromBody] FornecedorUpdateDTO item)
         {
             try
             {
-                var fornecedor = await _context.Fornecedores
-                    .Include(f => f.Endereco)
-                    .FirstOrDefaultAsync(f => f.Id == id);
+            var fornecedor = await _context.Fornecedores
+                .Include(f => f.Endereco)
+                .FirstOrDefaultAsync(f => f.Id == id);
 
-                if (fornecedor == null) return NotFound();
+            if (fornecedor == null) return NotFound("Fornecedor não encontrado.");
 
-                fornecedor.RazaoSocial = dto.RazaoSocial;
-                fornecedor.NomeFantasia = dto.NomeFantasia;
-                fornecedor.Endereco = dto.Endereco;
+            if (!string.IsNullOrEmpty(item.RazaoSocial))
+                fornecedor.RazaoSocial = item.RazaoSocial;
 
-                await _context.SaveChangesAsync();
-                return Ok(fornecedor);
+            if (!string.IsNullOrEmpty(item.NomeFantasia))
+                fornecedor.NomeFantasia = item.NomeFantasia;
+
+            if (item.Endereco != null)
+            {
+                if (!string.IsNullOrEmpty(item.Endereco.Rua))
+                fornecedor.Endereco.Rua = item.Endereco.Rua;
+
+                if (item.Endereco.Numero.HasValue && item.Endereco.Numero > 0)
+                fornecedor.Endereco.Numero = item.Endereco.Numero.Value;
+
+                if (!string.IsNullOrEmpty(item.Endereco.Bairro))
+                fornecedor.Endereco.Bairro = item.Endereco.Bairro;
+
+                if (item.Endereco.CidadeId.HasValue && item.Endereco.CidadeId > 0)
+                fornecedor.Endereco.CidadeId = item.Endereco.CidadeId.Value;
+            }
+
+            _context.Fornecedores.Update(fornecedor);
+            await _context.SaveChangesAsync();
+
+            return Ok(fornecedor);
             }
             catch (Exception e)
             {
-                return Problem(e.Message);
+            return Problem($"Erro ao atualizar fornecedor: {e.Message}");
             }
         }
 

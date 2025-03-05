@@ -8,14 +8,9 @@ namespace GestaoVendasWeb2.Controllers
 {
     [Route("produtos")]
     [ApiController]
-    public class ProdutoController : ControllerBase
+    public class ProdutoController(AppDbContext context) : ControllerBase
     {
-        private readonly AppDbContext _context;
-
-        public ProdutoController(AppDbContext context)
-        {
-            _context = context;
-        }
+        private readonly AppDbContext _context = context;
 
         [HttpGet]
         public async Task<IActionResult> Get()
@@ -25,9 +20,9 @@ namespace GestaoVendasWeb2.Controllers
                 var produtos = await _context.Produtos.ToListAsync();
                 return Ok(produtos);
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                return Problem("Erro ao processar a solicitação.");
+                return Problem("Erro ao processar a solicitação.", e.Message);
             }
         }
 
@@ -53,7 +48,8 @@ namespace GestaoVendasWeb2.Controllers
             {
                 Nome = item.Nome,
                 Descricao = item.Descricao,
-                Preco = item.Preco,
+                PrecoCompra = item.PrecoCompra,
+                Valor = item.Valor,
                 QuantidadeEstoque = item.QuantidadeEstoque,
                 DataValidade = item.DataValidade
             };
@@ -70,26 +66,40 @@ namespace GestaoVendasWeb2.Controllers
             }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] ProdutoDTO item)
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> Patch(int id, [FromBody] ProdutoUpdateDTO item)
         {
             try
             {
                 var produto = await _context.Produtos.FindAsync(id);
-                if (produto == null) return NotFound();
+                if (produto == null) return NotFound("Produto não encontrado.");
 
-                produto.Nome = item.Nome;
-                produto.Descricao = item.Descricao;
-                produto.Preco = item.Preco;
-                produto.QuantidadeEstoque = item.QuantidadeEstoque;
-                produto.DataValidade = item.DataValidade;
+                if (!string.IsNullOrEmpty(item.Nome))
+                    produto.Nome = item.Nome;
 
+                if (!string.IsNullOrEmpty(item.Descricao))
+                    produto.Descricao = item.Descricao;
+
+                if (item.PrecoCompra > 0)
+                    produto.PrecoCompra = (decimal)item.PrecoCompra;
+
+                if (item.Valor > 0)
+                    produto.Valor = (decimal)item.Valor;
+
+                if (item.QuantidadeEstoque >= 0)
+                    produto.QuantidadeEstoque = (int)item.QuantidadeEstoque;
+
+                if (item.DataValidade.HasValue)
+                    produto.DataValidade = item.DataValidade;
+
+                _context.Produtos.Update(produto);
                 await _context.SaveChangesAsync();
+
                 return Ok(produto);
             }
             catch (Exception e)
             {
-                return Problem(e.Message);
+                return Problem($"Erro ao atualizar o produto: {e.Message}");
             }
         }
 

@@ -11,37 +11,33 @@ namespace GestaoVendasWeb2.Models
         public int Id { get; set; }
 
         [Column("data")]
-        [Required]
         public DateTime Data { get; set; } = DateTime.Now;
 
         [Column("valor")]
-        [Required]
         [Range(0, double.MaxValue)]
         public decimal Valor { get; set; }
 
         [Column("forma_pag")]
-        [Required]
         [StringLength(50)]
         public string FormaPag { get; set; }
 
         [Column("status")]
-        [Required]
-        public StatusCompra Status { get; set; } = StatusCompra.EmAberto;
+        public StatusCompra Status { get; set; }
 
         [Column("observacao")]
-        [StringLength(500)]
+        [StringLength(200)]
         public string Observacao { get; set; }
 
         [ForeignKey("funcionario_id")]
-        [Required]
+        [Column("funcionario_id")]
         public int FuncionarioId { get; set; }
+        public virtual Funcionario Funcionario { get; set; }
 
         [ForeignKey("fornecedor_id")]
-        [Required]
+        [Column("fornecedor_id")]
         public int FornecedorId { get; set; }
-
-        public virtual Funcionario Funcionario { get; set; }
         public virtual Fornecedor Fornecedor { get; set; }
+
         public virtual ICollection<ItensCompra> ItensCompras { get; set; } = [];
         public virtual ICollection<Pagamento> Pagamentos { get; set; } = [];
 

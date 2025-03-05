@@ -5629,14 +5629,11 @@ create table Endereco (
 create table Cliente (
     id integer not null primary key auto_increment,
     nome varchar(200) not null,
-    estado_civil varchar(50),
     cpf varchar(20) not null,
     rg varchar(30),
     data_nasc date,
-    renda_familiar double,
     telefone varchar(50),
     sexo varchar(20) not null,
-    celular varchar(50) not null,
     endereco_id integer not null,
     foreign key (endereco_id) references Endereco (id)
 );
@@ -5678,6 +5675,8 @@ create table Compra (
     data date,
     valor double,
     forma_pag varchar(100),
+    status varchar(50) not null default 'EmAberto',
+    observacao varchar(500),
     funcionario_id int not null,
     fornecedor_id int not null,
     foreign key (funcionario_id) references Funcionario (id),
@@ -5703,7 +5702,7 @@ create table Caixa (
     valor_creditos double,
     valor_debitos double,
     saldo_final double,
-    status varchar(100) not null
+    status boolean not null
 );
 
 create table Venda (

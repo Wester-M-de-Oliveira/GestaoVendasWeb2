@@ -50,7 +50,7 @@ namespace GestaoVendasWeb2.Controllers
                 Rua = item.Endereco.Rua,
                 Numero = item.Endereco.Numero,
                 Bairro = item.Endereco.Bairro,
-                Cidade = item.Endereco.Cidade,
+                CidadeId = item.Endereco.CidadeId
             };
 
             var funcionario = new Funcionario {
@@ -80,26 +80,55 @@ namespace GestaoVendasWeb2.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] FuncionarioDTO item)
+        public async Task<IActionResult> Put(int id, [FromBody] UpdateFuncionarioDTO item)
         {
             try
             {
-                var funcionario = await _context.Funcionarios.Include(f => f.Endereco).FirstOrDefaultAsync(f => f.Id == id);
-                if (funcionario == null) return NotFound();
+                var funcionario = await _context.Funcionarios.Include(f => f.Endereco)
+                        .ThenInclude(e => e.Cidade)
+                        .ThenInclude(c => c.Estado)
+                        .FirstOrDefaultAsync(f => f.Id == id);
 
-                funcionario.Nome = item.Nome;
-                funcionario.CPF = item.CPF;
-                funcionario.RG = item.RG;
-                funcionario.DataNascimento = item.DataNascimento;
-                funcionario.Salario = item.Salario;
-                funcionario.Funcao = item.Funcao;
-                funcionario.Telefone = item.Telefone;
-                funcionario.Sexo = item.Sexo;
+                if (funcionario == null) return NotFound("Funcionário não encontrado.");
 
-                funcionario.Endereco.Rua = item.Endereco.Rua;
-                funcionario.Endereco.Numero = item.Endereco.Numero;
-                funcionario.Endereco.Bairro = item.Endereco.Bairro;
-                funcionario.Endereco.Cidade = item.Endereco.Cidade;
+                if (!string.IsNullOrEmpty(item.Nome))
+                    funcionario.Nome = item.Nome;
+
+                if (!string.IsNullOrEmpty(item.CPF))
+                    funcionario.CPF = item.CPF;
+
+                if (!string.IsNullOrEmpty(item.RG))
+                    funcionario.RG = item.RG;
+
+                if (item.DataNascimento.HasValue)
+                    funcionario.DataNascimento = item.DataNascimento.Value;
+
+                if (item.Salario.HasValue)
+                    funcionario.Salario = item.Salario.Value;
+
+                if (!string.IsNullOrEmpty(item.Funcao))
+                    funcionario.Funcao = item.Funcao;
+
+                if (!string.IsNullOrEmpty(item.Telefone))
+                    funcionario.Telefone = item.Telefone;
+
+                if (!string.IsNullOrEmpty(item.Sexo))
+                    funcionario.Sexo = item.Sexo;
+
+                if (item.Endereco != null)
+                {
+                    if (!string.IsNullOrEmpty(item.Endereco.Rua))
+                        funcionario.Endereco.Rua = item.Endereco.Rua;
+
+                    if (item.Endereco.Numero.HasValue && item.Endereco.Numero > 0)
+                        funcionario.Endereco.Numero = item.Endereco.Numero.Value;
+
+                    if (!string.IsNullOrEmpty(item.Endereco.Bairro))
+                        funcionario.Endereco.Bairro = item.Endereco.Bairro;
+
+                    if (item.Endereco.CidadeId.HasValue && item.Endereco.CidadeId > 0)
+                        funcionario.Endereco.CidadeId = item.Endereco.CidadeId.Value;
+                }
 
                 _context.Funcionarios.Update(funcionario);
                 await _context.SaveChangesAsync();
@@ -108,7 +137,7 @@ namespace GestaoVendasWeb2.Controllers
             }
             catch (Exception e)
             {
-                return Problem(e.Message);
+                return Problem($"Erro ao atualizar funcionário: {e.Message}");
             }
         }
 

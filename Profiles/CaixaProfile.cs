@@ -8,7 +8,24 @@ namespace GestaoVendasWeb2.Profiles
     {
         public MappingProfile()
         {
-            CreateMap<Caixa, CaixaDTO>().ReverseMap();
+            // Map from Model to DTO
+            CreateMap<Caixa, CaixaDTO>();
+            
+            // Map from CreateUpdateDTO to Model
+            CreateMap<CaixaCreateUpdateDTO, Caixa>();
+            
+            // Map from Model to CreateUpdateDTO
+            CreateMap<Caixa, CaixaCreateUpdateDTO>();
+        }
+    }
+
+    public class CaixaProfile : Profile
+    {
+        public CaixaProfile()
+        {
+            CreateMap<Caixa, CaixaDTO>();
+            CreateMap<CaixaDTO, Caixa>();
         }
     }
 }
+

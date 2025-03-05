@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;  // Make sure this is present
 using GestaoVendasWeb2.DataContexts;
 using GestaoVendasWeb2.Dtos;
 using GestaoVendasWeb2.Models;
@@ -25,8 +25,10 @@ namespace GestaoVendasWeb2.Controllers
         {
             var vendas = await _context.Vendas
                 .Include(v => v.ItensVendas)
+                    .ThenInclude(iv => iv.Produto)
                 .Include(v => v.Funcionario)
                 .Include(v => v.Cliente)
+                .Include(v => v.Recebimentos)
                 .ToListAsync();
 
             return Ok(_mapper.Map<List<VendaDTO>>(vendas));
@@ -37,8 +39,10 @@ namespace GestaoVendasWeb2.Controllers
         {
             var venda = await _context.Vendas
                 .Include(v => v.ItensVendas)
+                    .ThenInclude(iv => iv.Produto)
                 .Include(v => v.Funcionario)
                 .Include(v => v.Cliente)
+                .Include(v => v.Recebimentos)
                 .FirstOrDefaultAsync(v => v.Id == id);
 
             if (venda == null)
@@ -50,44 +54,39 @@ namespace GestaoVendasWeb2.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<VendaDTO>> PostVenda(VendaDTO vendaDto)
+        public async Task<ActionResult<VendaDTO>> PostVenda(VendaCreateDTO vendaDto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Validar relacionamentos
-                var funcionarioExists = await _context.Funcionarios.AnyAsync(f => f.Id == vendaDto.FuncionarioId);
-                var clienteExists = await _context.Clientes.AnyAsync(c => c.Id == vendaDto.ClienteId);
-
-                if (!funcionarioExists || !clienteExists)
-                {
-                    return BadRequest("Funcionário ou Cliente não encontrado.");
-                }
-
-                // Validar produtos
-                foreach (var item in vendaDto.ItensVendas)
+                var venda = _mapper.Map<Venda>(vendaDto);
+                
+                // Atualizar estoque dos produtos
+                foreach (var item in venda.ItensVendas)
                 {
                     var produto = await _context.Produtos.FindAsync(item.ProdutoId);
-                    if (produto == null)
+                    if (produto != null)
                     {
-                        return BadRequest($"Produto com ID {item.ProdutoId} não encontrado.");
+                        produto.QuantidadeEstoque -= item.Quantidade;
+                        item.Valor = (double)produto.Valor; // Garantir que o valor seja o preço de venda do produto
                     }
-                }
-
-                var venda = _mapper.Map<Venda>(vendaDto);
-                venda.DataVenda = DateTime.Now;
-                
-                // Calcula valor total com desconto
-                if (vendaDto.Desconto.HasValue)
-                {
-                    venda.Valor = (decimal)(vendaDto.ItensVendas.Sum(i => i.Valor * i.Quantidade) - vendaDto.Desconto.Value);
                 }
 
                 _context.Vendas.Add(venda);
                 await _context.SaveChangesAsync();
+                
+                // Recarregar a venda com todos os relacionamentos para a resposta
+                var vendaCompleta = await _context.Vendas
+                    .Include(v => v.ItensVendas)
+                        .ThenInclude(iv => iv.Produto)
+                    .Include(v => v.Funcionario)
+                    .Include(v => v.Cliente)
+                    .Include(v => v.Recebimentos)
+                    .FirstOrDefaultAsync(v => v.Id == venda.Id);
+                    
                 await transaction.CommitAsync();
 
-                return CreatedAtAction(nameof(GetVenda), new { id = venda.Id }, _mapper.Map<VendaDTO>(venda));
+                return CreatedAtAction(nameof(GetVenda), new { id = venda.Id }, _mapper.Map<VendaDTO>(vendaCompleta));
             }
             catch (Exception ex)
             {
@@ -96,17 +95,12 @@ namespace GestaoVendasWeb2.Controllers
             }
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutVenda(int id, VendaDTO vendaDto)
-        {
-            if (id != vendaDto.Id)
-            {
-                return BadRequest("O ID da URL não corresponde ao ID do objeto.");
-            }
-
-            using var transaction = await _context.Database.BeginTransactionAsync();
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchVenda(int id, VendaUpdateDTO vendaDto)
+        {   
             try
-            {
+            {               
+                // First check if the venda exists directly in the controller
                 var venda = await _context.Vendas
                     .Include(v => v.ItensVendas)
                     .FirstOrDefaultAsync(v => v.Id == id);
@@ -115,37 +109,94 @@ namespace GestaoVendasWeb2.Controllers
                 {
                     return NotFound($"Venda com ID {id} não encontrada.");
                 }
-
-                // Validar relacionamentos
-                var funcionarioExists = await _context.Funcionarios.AnyAsync(f => f.Id == vendaDto.FuncionarioId);
-                var clienteExists = await _context.Clientes.AnyAsync(c => c.Id == vendaDto.ClienteId);
-
-                if (!funcionarioExists || !clienteExists)
+                
+                using var transaction = await _context.Database.BeginTransactionAsync();
+                try
                 {
-                    return BadRequest("Funcionário ou Cliente não encontrado.");
+                    // Only update ItensVenda if explicitly provided in the DTO
+                    if (vendaDto.UpdateItems)
+                    {
+                        // Restore product stock before updating
+                        foreach (var item in venda.ItensVendas)
+                        {
+                            var produto = await _context.Produtos.FindAsync(item.ProdutoId);
+                            if (produto != null)
+                                produto.QuantidadeEstoque += item.Quantidade;
+                        }
+
+                        // Remove existing items
+                        _context.ItensVendas.RemoveRange(venda.ItensVendas);
+                        
+                        // Add new items
+                        venda.ItensVendas.Clear();
+                        foreach (var itemDto in vendaDto.ItensVendas)
+                        {
+                            var produto = await _context.Produtos.FindAsync(itemDto.ProdutoId);
+                            if (produto != null)
+                            {
+                                var novoItem = new ItensVenda
+                                {
+                                    ProdutoId = itemDto.ProdutoId,
+                                    Quantidade = itemDto.Quantidade,
+                                    Valor = (double)produto.Valor,
+                                    VendaId = venda.Id
+                                };
+                                venda.ItensVendas.Add(novoItem);
+                                
+                                // Update stock
+                                produto.QuantidadeEstoque -= itemDto.Quantidade;
+                            }
+                        }
+                        
+                        // Recalculate total value if items were updated
+                        venda.CalcularValorTotal();
+                    }
+
+                    // Update basic properties
+                    if (vendaDto.Desconto.HasValue)
+                    {
+                        venda.Desconto = vendaDto.Desconto;
+                        // If items weren't updated but discount was, recalculate total
+                        if (!vendaDto.UpdateItems)
+                            venda.CalcularValorTotal();
+                    }
+                        
+                    if (!string.IsNullOrEmpty(vendaDto.FormaPag))
+                        venda.FormaPag = vendaDto.FormaPag;
+                        
+                    if (vendaDto.QuantParcelas.HasValue)
+                        venda.QuantParcelas = vendaDto.QuantParcelas;
+                        
+                    if (vendaDto.FuncionarioId.HasValue)
+                        venda.FuncionarioId = vendaDto.FuncionarioId.Value;
+                        
+                    if (vendaDto.ClienteId.HasValue)
+                        venda.ClienteId = vendaDto.ClienteId.Value;
+
+                    await _context.SaveChangesAsync();
+                    
+                    // Reload the complete sale for the response
+                    var vendaCompleta = await _context.Vendas
+                        .Include(v => v.ItensVendas)
+                            .ThenInclude(iv => iv.Produto)
+                        .Include(v => v.Funcionario)
+                        .Include(v => v.Cliente)
+                        .Include(v => v.Recebimentos)
+                        .FirstOrDefaultAsync(v => v.Id == venda.Id);
+                        
+                    await transaction.CommitAsync();
+
+                    return Ok(_mapper.Map<VendaDTO>(vendaCompleta));
                 }
-
-                // Remove itens existentes
-                _context.ItensVendas.RemoveRange(venda.ItensVendas);
-
-                // Mapeia novas propriedades
-                _mapper.Map(vendaDto, venda);
-
-                // Recalcula valor com desconto
-                if (vendaDto.Desconto.HasValue)
+                catch (Exception ex)
                 {
-                    venda.Valor = (decimal)(vendaDto.ItensVendas.Sum(i => i.Valor * i.Quantidade) - vendaDto.Desconto.Value);
+                    await transaction.RollbackAsync();
+                    return StatusCode(500, $"Erro ao atualizar venda: {ex.Message}");
                 }
-
-                await _context.SaveChangesAsync();
-                await transaction.CommitAsync();
-
-                return Ok(_mapper.Map<VendaDTO>(venda));
             }
             catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                return StatusCode(500, $"Erro ao atualizar venda: {ex.Message}");
+                return StatusCode(500, $"Erro ao processar requisição: {ex.Message}");
             }
         }
 
@@ -157,11 +208,26 @@ namespace GestaoVendasWeb2.Controllers
             {
                 var venda = await _context.Vendas
                     .Include(v => v.ItensVendas)
+                    .Include(v => v.Recebimentos)
                     .FirstOrDefaultAsync(v => v.Id == id);
 
                 if (venda == null)
                 {
                     return NotFound($"Venda com ID {id} não encontrada.");
+                }
+                
+                // Verificar se já existem recebimentos
+                if (venda.Recebimentos.Any())
+                {
+                    return BadRequest("Não é possível excluir uma venda que já possui recebimentos registrados.");
+                }
+
+                // Restaurar o estoque dos produtos
+                foreach (var item in venda.ItensVendas)
+                {
+                    var produto = await _context.Produtos.FindAsync(item.ProdutoId);
+                    if (produto != null)
+                        produto.QuantidadeEstoque += item.Quantidade;
                 }
 
                 _context.ItensVendas.RemoveRange(venda.ItensVendas);
@@ -177,11 +243,6 @@ namespace GestaoVendasWeb2.Controllers
                 await transaction.RollbackAsync();
                 return StatusCode(500, $"Erro ao excluir venda: {ex.Message}");
             }
-        }
-
-        private async Task<bool> VendaExists(int id)
-        {
-            return await _context.Vendas.AnyAsync(v => v.Id == id);
         }
     }
 }

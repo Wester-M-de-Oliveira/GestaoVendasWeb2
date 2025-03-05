@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using GestaoVendasWeb2.DataContexts;
-using GestaoVendasWeb2.Dtos;
 using GestaoVendasWeb2.Models;
 using AutoMapper;
 
@@ -17,121 +16,158 @@ namespace GestaoVendasWeb2.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<CompraDTO>>> GetCompras()
         {
-            var compras = await _context.Compras
-                .Include(c => c.ItensCompras)
-                .Include(c => c.Funcionario)
-                .Include(c => c.Fornecedor)
-                .Include(c => c.Pagamentos)
-                .Select(c => new CompraDTO
-                {
-                    Id = c.Id,
-                    Data = c.Data,
-                    Valor = c.Valor,
-                    FormaPag = c.FormaPag,
-                    Status = c.Status,
-                    Observacao = c.Observacao,
-                    FuncionarioId = c.FuncionarioId,
-                    FornecedorId = c.FornecedorId,
-                    Funcionario = new FuncionarioDTO { Id = c.Funcionario.Id, Nome = c.Funcionario.Nome },
-                    Fornecedor = new FornecedorDTO { Id = c.Fornecedor.Id, NomeFantasia = c.Fornecedor.NomeFantasia },
-                    ItensCompra = c.ItensCompras.Select(i => new ItensCompraDTO
-                    {
-                        Id = i.Id,
-                        Quantidade = i.Quantidade,
-                        Valor = i.Valor,
-                        ProdutoId = i.ProdutoId,
-                        CompraId = i.CompraId
-                    }).ToList(),
-                    Pagamentos = c.Pagamentos.Select(p => new PagamentoDTO
-                    {
-                        Id = p.Id,
-                        Valor = (double)p.Valor,
-                        Data = p.Data,
-                        FormaPag = p.FormaPag
-                    }).ToList()
-                })
-                .ToListAsync();
+            try
+            {
+                var compras = await _context.Compras
+                    .Include(c => c.ItensCompras)
+                    .Include(c => c.Funcionario)
+                    .Include(c => c.Fornecedor)
+                    .Include(c => c.Pagamentos)
+                    .AsNoTracking()
+                    .ToListAsync();
+                // Mapeando para o DTO usando AutoMapper
+                var comprasDto = _mapper.Map<List<CompraDTO>>(compras);
 
-            return Ok(compras);
+                return Ok(comprasDto);
+            }
+            catch (Exception e)
+            {
+                return Problem(e.Message, e.Source);
+            }
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<CompraDTO>> GetCompra(int id)
         {
-            var compra = await _context.Compras
-                .Include(c => c.ItensCompras)
-                .Include(c => c.Funcionario)
-                .Include(c => c.Fornecedor)
-                .Include(c => c.Pagamentos)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (compra == null)
+            try
             {
-                return NotFound();
-            }
+                var compra = await _context.Compras
+                    .Include(c => c.ItensCompras)
+                        .ThenInclude(i => i.Produto)
+                    .Include(c => c.Funcionario)
+                    .Include(c => c.Fornecedor)
+                    .Include(c => c.Pagamentos)
+                    .FirstOrDefaultAsync(c => c.Id == id);
 
-            return _mapper.Map<CompraDTO>(compra);
+
+                if (compra == null)
+                {
+                    return NotFound();
+                }
+                return _mapper.Map<CompraDTO>(compra);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Erro ao buscar compra: {ex.Message}");
+            }
         }
 
         [HttpPost]
-        public async Task<ActionResult<CompraDTO>> PostCompra(CompraDTO compraDto)
+        public async Task<ActionResult<CompraDTO>> PostCompra(CompraCreateDto compraDto)
         {
-            var compra = _mapper.Map<Compra>(compraDto);
-            
-            _context.Compras.Add(compra);
-            await _context.SaveChangesAsync();
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                if (compraDto.ItensCompra == null || !compraDto.ItensCompra.Any())
+                    return BadRequest("A compra deve ter pelo menos um item.");
 
-            return CreatedAtAction(nameof(GetCompra), new { id = compra.Id }, _mapper.Map<CompraDTO>(compra));
+                var compra = _mapper.Map<Compra>(compraDto);
+
+                compra.Valor = compraDto.Valor;
+
+                foreach (var item in compra.ItensCompras)
+                {
+                    item.Compra = compra;
+                    item.CompraId = compra.Id;
+                }
+
+                _context.Compras.Add(compra);
+                await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+
+                return CreatedAtAction(nameof(GetCompra), new { id = compra.Id }, _mapper.Map<CompraDTO>(compra));
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                return StatusCode(500, $"Erro ao processar a compra: {ex.Message}");
+            }
         }
 
-    // PUT: api/Compra/5
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutCompra(int id, CompraDTO compraDto)
-    {
-        try
-        {
-            if (id != compraDto.Id)
-            {
-                return BadRequest("O ID da URL não corresponde ao ID do objeto.");
-            }
 
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> PatchCompra(int id, [FromBody] CompraUpdateDto compraDto)
+        {
             var compra = await _context.Compras
                 .Include(c => c.ItensCompras)
                 .Include(c => c.Funcionario)
                 .Include(c => c.Fornecedor)
-                .Include(c => c.Pagamentos)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (compra == null)
-            {
                 return NotFound($"Compra com ID {id} não encontrada.");
-            }
-
-            // Validar relacionamentos
-            var funcionarioExists = await _context.Funcionarios.AnyAsync(f => f.Id == compraDto.FuncionarioId);
-            var fornecedorExists = await _context.Fornecedores.AnyAsync(f => f.Id == compraDto.FornecedorId);
-
-            if (!funcionarioExists || !fornecedorExists)
-            {
-                return BadRequest("Funcionário ou Fornecedor não encontrado.");
-            }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Remove itens existentes
-                _context.ItensCompras.RemoveRange(compra.ItensCompras);
+                // Atualizar apenas os campos fornecidos no DTO
+                if (compraDto.Data.HasValue)
+                    compra.Data = compraDto.Data.Value;
 
-                // Mapeia as novas propriedades
-                _mapper.Map(compraDto, compra);
+                if (!string.IsNullOrWhiteSpace(compraDto.FormaPag))
+                    compra.FormaPag = compraDto.FormaPag;
 
-                // Recalcula o valor total
-                compra.RecalcularValorTotal();
+                if (compraDto.Status.HasValue)
+                    compra.Status = compraDto.Status.Value;
+
+                if (!string.IsNullOrWhiteSpace(compraDto.Observacao))
+                    compra.Observacao = compraDto.Observacao;
+
+                if (compraDto.FuncionarioId.HasValue)
+                {
+                    var funcionarioExists = await _context.Funcionarios.AnyAsync(f => f.Id == compraDto.FuncionarioId);
+                    if (!funcionarioExists)
+                        return BadRequest("Funcionário não encontrado.");
+
+                    compra.FuncionarioId = compraDto.FuncionarioId.Value;
+                }
+
+                if (compraDto.FornecedorId.HasValue)
+                {
+                    var fornecedorExists = await _context.Fornecedores.AnyAsync(f => f.Id == compraDto.FornecedorId);
+                    if (!fornecedorExists)
+                        return BadRequest("Fornecedor não encontrado.");
+
+                    compra.FornecedorId = compraDto.FornecedorId.Value;
+                }
+
+                // Atualizar os itens de compra (sempre substitui os antigos pelos novos)
+                if (compraDto.ItensCompra != null && compraDto.ItensCompra.Any())
+                {
+                    _context.ItensCompras.RemoveRange(compra.ItensCompras);
+
+                    var novosItens = compraDto.ItensCompra.Select(item => new ItensCompra
+                    {
+                        CompraId = compra.Id,
+                        ProdutoId = item.ProdutoId,
+                        Quantidade = item.Quantidade
+                    }).ToList();
+
+                    await _context.ItensCompras.AddRangeAsync(novosItens);
+
+                    // Recalcular o valor total
+                    var produtos = await _context.Produtos
+                        .Where(p => compraDto.ItensCompra.Select(i => i.ProdutoId).Contains(p.Id))
+                        .ToDictionaryAsync(p => p.Id, p => p.PrecoCompra);
+
+                    compra.Valor = compraDto.ItensCompra.Sum(item =>
+                        produtos.TryGetValue(item.ProdutoId, out var preco) ? item.Quantidade * preco : 0);
+                }
 
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                // Retorna a compra atualizada
                 var compraAtualizada = await _context.Compras
                     .Include(c => c.ItensCompras)
                     .Include(c => c.Funcionario)
@@ -146,63 +182,49 @@ namespace GestaoVendasWeb2.Controllers
                 throw;
             }
         }
-        catch (DbUpdateConcurrencyException)
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCompra(int id)
         {
-            if (!await CompraExists(id))
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
             {
-                return NotFound($"Compra com ID {id} não encontrada.");
+                var compra = await _context.Compras
+                    .Include(c => c.ItensCompras)
+                    .Include(c => c.Pagamentos)
+                    .FirstOrDefaultAsync(c => c.Id == id);
+
+                if (compra == null)
+                {
+                    return NotFound($"Compra com ID {id} não encontrada.");
+                }
+
+                // Verifica se a compra pode ser excluída
+                if (compra.Status == StatusCompra.Finalizada && compra.Pagamentos.Any())
+                {
+                    return BadRequest("Não é possível excluir uma compra finalizada com pagamentos.");
+                }
+
+                // Remove itens relacionados
+                _context.ItensCompras.RemoveRange(compra.ItensCompras);
+                _context.Pagamentos.RemoveRange(compra.Pagamentos);
+                _context.Compras.Remove(compra);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return NoContent();
             }
-            throw;
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Erro interno: {ex.Message}");
-        }
-    }
-
-    // DELETE: api/Compra/5
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteCompra(int id)
-    {
-        using var transaction = await _context.Database.BeginTransactionAsync();
-        try
-        {
-            var compra = await _context.Compras
-                .Include(c => c.ItensCompras)
-                .Include(c => c.Pagamentos)
-                .FirstOrDefaultAsync(c => c.Id == id);
-
-            if (compra == null)
+            catch (Exception ex)
             {
-                return NotFound($"Compra com ID {id} não encontrada.");
+                await transaction.RollbackAsync();
+                return StatusCode(500, $"Erro ao excluir compra: {ex.Message}");
             }
-
-            // Verifica se a compra pode ser excluída
-            if (compra.Status == StatusCompra.Finalizada && compra.Pagamentos.Any())
-            {
-                return BadRequest("Não é possível excluir uma compra finalizada com pagamentos.");
-            }
-
-            // Remove itens relacionados
-            _context.ItensCompras.RemoveRange(compra.ItensCompras);
-            _context.Pagamentos.RemoveRange(compra.Pagamentos);
-            _context.Compras.Remove(compra);
-
-            await _context.SaveChangesAsync();
-            await transaction.CommitAsync();
-
-            return NoContent();
         }
-        catch (Exception ex)
+
+        private async Task<bool> CompraExists(int id)
         {
-            await transaction.RollbackAsync();
-            return StatusCode(500, $"Erro ao excluir compra: {ex.Message}");
+            return await _context.Compras.AnyAsync(c => c.Id == id);
         }
-    }
-
-    private async Task<bool> CompraExists(int id)
-    {
-        return await _context.Compras.AnyAsync(c => c.Id == id);
-    }
     }
 }

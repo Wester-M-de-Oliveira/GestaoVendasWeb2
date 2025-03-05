@@ -10,11 +10,13 @@ namespace GestaoVendasWeb2.Models
         [Column("id")]
         public int Id { get; set; }
 
+        [Required]
         [Column("quantidade")]
         public int Quantidade { get; set; }
 
+        [Required]
         [Column("valor")]
-        public double Valor { get; set; }
+        public decimal Valor { get; set; } // Alterado para decimal
 
         [Required]
         [Column("produto_id")]
@@ -25,9 +27,9 @@ namespace GestaoVendasWeb2.Models
         public int CompraId { get; set; }
 
         [ForeignKey("ProdutoId")]
-        public virtual Produto Produto { get; set; }
+        public virtual Produto Produto { get; set; } = null!;
 
         [ForeignKey("CompraId")]
-        public virtual Compra Compra { get; set; }
+        public virtual Compra Compra { get; set; } = null!;
     }
 }

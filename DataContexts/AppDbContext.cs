@@ -56,6 +56,10 @@ namespace GestaoVendasWeb2.DataContexts
                 .WithMany(e => e.Fornecedores)
                 .HasForeignKey(f => f.EnderecoId);
 
+            modelBuilder.Entity<Compra>()
+                .Property(c => c.Status)
+                .HasConversion<string>();
+
             // Relação Compra -> Fornecedor
             modelBuilder.Entity<Compra>()
                 .HasOne(c => c.Fornecedor)

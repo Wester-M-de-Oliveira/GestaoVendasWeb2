@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace GestaoVendasWeb2.Models
 {
@@ -41,7 +42,10 @@ namespace GestaoVendasWeb2.Models
         [Column("status")]
         public bool Status { get; set; } = true;
 
+        [JsonIgnore]
         public virtual ICollection<Recebimento> Recebimentos { get; set; } = new List<Recebimento>();
+
+        [JsonIgnore]
         public virtual ICollection<Pagamento> Pagamentos { get; set; } = new List<Pagamento>();
 
         public void CalcularSaldoFinal()

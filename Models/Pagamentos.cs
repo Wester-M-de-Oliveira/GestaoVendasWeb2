@@ -27,13 +27,11 @@ public class Pagamento
     [Column("caixa_id")]
     public int CaixaId { get; set; }
 
-    [Required]
     [Column("compra_id")]
-    public int CompraId { get; set; }
+    public int? CompraId { get; set; }
 
-    [Required]
     [Column("despesa_id")]
-    public int DespesaId { get; set; }
+    public int? DespesaId { get; set; }
 
     [Required]
     [Column("funcionario_id")]

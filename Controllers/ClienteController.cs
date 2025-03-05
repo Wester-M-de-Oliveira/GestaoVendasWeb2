@@ -66,14 +66,11 @@ namespace GestaoVendasWeb2.Controllers
             var cliente = new Cliente
             {
                 Nome = item.Nome,
-                EstadoCivil = item.EstadoCivil,
                 CPF = item.Cpf,
                 RG = item.Rg,
                 DataNascimento = item.DataNasc,
-                RendaFamiliar = (float?)item.RendaFamiliar,
                 Telefone = item.Telefone,
                 Sexo = item.Sexo,
-                Celular = item.Celular,
                 Endereco = endereco
             };
 
@@ -106,9 +103,6 @@ namespace GestaoVendasWeb2.Controllers
                 if (!string.IsNullOrEmpty(item.Nome))
                     cliente.Nome = item.Nome;
 
-                if (!string.IsNullOrEmpty(item.EstadoCivil))
-                    cliente.EstadoCivil = item.EstadoCivil;
-
                 if (!string.IsNullOrEmpty(item.Cpf))
                     cliente.CPF = item.Cpf;
 
@@ -118,17 +112,11 @@ namespace GestaoVendasWeb2.Controllers
                 if (item.DataNasc.HasValue)
                     cliente.DataNascimento = item.DataNasc;
 
-                if (item.RendaFamiliar.HasValue)
-                    cliente.RendaFamiliar = (float?)item.RendaFamiliar;
-
                 if (!string.IsNullOrEmpty(item.Telefone))
                     cliente.Telefone = item.Telefone;
 
                 if (!string.IsNullOrEmpty(item.Sexo))
                     cliente.Sexo = item.Sexo;
-
-                if (!string.IsNullOrEmpty(item.Celular))
-                    cliente.Celular = item.Celular;
 
                 if (item.Endereco != null)
                 {

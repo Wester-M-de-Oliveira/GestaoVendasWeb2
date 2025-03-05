@@ -46,7 +46,7 @@ public class DespesaController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<DespesaDTO>> PostDespesa(DespesaDTO despesaDto)
+    public async Task<ActionResult<DespesaDTO>> PostDespesa(DespesaCreateDTO despesaDto)
     {
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
@@ -69,24 +69,32 @@ public class DespesaController : ControllerBase
         }
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> PutDespesa(int id, DespesaDTO despesaDto)
+    [HttpPatch("{id}")]
+    public async Task<IActionResult> PatchDespesa(int id, DespesaUpdateDTO despesaDto)
     {
-        if (id != despesaDto.Id)
-            return BadRequest("O ID da URL não corresponde ao ID do objeto.");
-
         using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
-            var despesa = await _context.Despesas.FindAsync(id);
+            var despesa = await _context.Despesas
+                .Include(d => d.Fornecedor)
+                .Include(d => d.Pagamentos)
+                .FirstOrDefaultAsync(d => d.Id == id);
+                
             if (despesa == null)
                 return NotFound($"Despesa com ID {id} não encontrada.");
 
-            var fornecedorExists = await _context.Fornecedores.AnyAsync(f => f.Id == despesaDto.FornecedorId);
-            if (!fornecedorExists)
-                return BadRequest("Fornecedor não encontrado.");
+            // Only check if fornecedor exists if it was provided in the update
+            if (despesaDto.FornecedorId.HasValue)
+            {
+                var fornecedorExists = await _context.Fornecedores.AnyAsync(f => f.Id == despesaDto.FornecedorId);
+                if (!fornecedorExists)
+                    return BadRequest($"Fornecedor com ID {despesaDto.FornecedorId} não encontrado.");
+            }
 
+            // Map only the properties that were provided
             _mapper.Map(despesaDto, despesa);
+            
+            _context.Entry(despesa).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
