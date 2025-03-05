@@ -3,11 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using GestaoVendasWeb2.DataContexts;
 using GestaoVendasWeb2.Models;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GestaoVendasWeb2.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CompraController(AppDbContext context, IMapper mapper) : ControllerBase
     {
         private readonly AppDbContext _context = context;
@@ -25,7 +27,7 @@ namespace GestaoVendasWeb2.Controllers
                     .Include(c => c.Pagamentos)
                     .AsNoTracking()
                     .ToListAsync();
-                // Mapeando para o DTO usando AutoMapper
+
                 var comprasDto = _mapper.Map<List<CompraDTO>>(compras);
 
                 return Ok(comprasDto);
@@ -111,7 +113,6 @@ namespace GestaoVendasWeb2.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Atualizar apenas os campos fornecidos no DTO
                 if (compraDto.Data.HasValue)
                     compra.Data = compraDto.Data.Value;
 
@@ -142,7 +143,6 @@ namespace GestaoVendasWeb2.Controllers
                     compra.FornecedorId = compraDto.FornecedorId.Value;
                 }
 
-                // Atualizar os itens de compra (sempre substitui os antigos pelos novos)
                 if (compraDto.ItensCompra != null && compraDto.ItensCompra.Any())
                 {
                     _context.ItensCompras.RemoveRange(compra.ItensCompras);
@@ -156,7 +156,6 @@ namespace GestaoVendasWeb2.Controllers
 
                     await _context.ItensCompras.AddRangeAsync(novosItens);
 
-                    // Recalcular o valor total
                     var produtos = await _context.Produtos
                         .Where(p => compraDto.ItensCompra.Select(i => i.ProdutoId).Contains(p.Id))
                         .ToDictionaryAsync(p => p.Id, p => p.PrecoCompra);
@@ -199,13 +198,11 @@ namespace GestaoVendasWeb2.Controllers
                     return NotFound($"Compra com ID {id} não encontrada.");
                 }
 
-                // Verifica se a compra pode ser excluída
                 if (compra.Status == StatusCompra.Finalizada && compra.Pagamentos.Any())
                 {
                     return BadRequest("Não é possível excluir uma compra finalizada com pagamentos.");
                 }
 
-                // Remove itens relacionados
                 _context.ItensCompras.RemoveRange(compra.ItensCompras);
                 _context.Pagamentos.RemoveRange(compra.Pagamentos);
                 _context.Compras.Remove(compra);

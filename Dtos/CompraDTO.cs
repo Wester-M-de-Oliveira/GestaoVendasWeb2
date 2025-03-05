@@ -64,15 +64,12 @@ public class CompraCreateDto : IValidatableObject
     {
         var _context = (AppDbContext)validationContext.GetService(typeof(AppDbContext));
 
-        // Validar se o funcionário existe
         if (!_context.Funcionarios.Any(f => f.Id == FuncionarioId))
             yield return new ValidationResult("Funcionário não encontrado.", [nameof(FuncionarioId)]);
 
-        // Validar se o fornecedor existe
         if (!_context.Fornecedores.Any(f => f.Id == FornecedorId))
             yield return new ValidationResult("Fornecedor não encontrado.", [nameof(FornecedorId)]);
 
-        // Validar se todos os itens da compra possuem produtos válidos
         if (ItensCompra == null || !ItensCompra.Any())
             yield return new ValidationResult("A compra deve ter pelo menos um item.", [nameof(ItensCompra)]);
 
@@ -80,11 +77,9 @@ public class CompraCreateDto : IValidatableObject
         var produtosExistentes = _context.Produtos.Where(p => produtoIds.Contains(p.Id)).Select(p => p.Id).ToList();
         var produtosNaoEncontrados = produtoIds.Except(produtosExistentes).ToList();
 
-        // Se houver produtos que não existem, retorne erro
         if (produtosNaoEncontrados.Any())
             yield return new ValidationResult($"Os seguintes produtos não foram encontrados: {string.Join(", ", produtosNaoEncontrados)}", [nameof(ItensCompra)]);
 
-        // Calcular o valor total da compra somando os valores dos itens
         Valor = 0;
 
         foreach (var item in ItensCompra)

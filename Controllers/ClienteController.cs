@@ -1,16 +1,24 @@
-﻿using GestaoVendasWeb2.DataContexts;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using GestaoVendasWeb2.DataContexts;
 using GestaoVendasWeb2.Dtos;
 using GestaoVendasWeb2.Models;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GestaoVendasWeb2.Controllers
 {
-    [Route("clientes")]
+    [Route("api/[controller]")]
     [ApiController]
-    public class ClienteController(AppDbContext context) : Controller
+    [Authorize]
+    public class ClienteController : ControllerBase
     {
-        private readonly AppDbContext _context = context;
+        private readonly AppDbContext _context;
+
+        public ClienteController(AppDbContext context)
+        {
+            _context = context;
+        }
 
         [HttpGet]
         public async Task<IActionResult> Get()

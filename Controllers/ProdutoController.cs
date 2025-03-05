@@ -3,11 +3,13 @@ using GestaoVendasWeb2.Dtos;
 using GestaoVendasWeb2.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GestaoVendasWeb2.Controllers 
 {
     [Route("produtos")]
     [ApiController]
+    [Authorize]
     public class ProdutoController(AppDbContext context) : ControllerBase
     {
         private readonly AppDbContext _context = context;

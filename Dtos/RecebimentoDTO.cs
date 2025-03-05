@@ -23,7 +23,6 @@ namespace GestaoVendasWeb2.Dtos
         public int FuncionarioId { get; set; }
         public FuncionarioDTO Funcionario { get; set; }
         
-        // Propriedade calculada para mostrar o valor pendente da venda após este recebimento
         public decimal ValorPendente => Venda?.Valor - Venda?.Recebimentos?.Sum(r => r.Valor) ?? 0;
     }
     
@@ -46,14 +45,12 @@ namespace GestaoVendasWeb2.Dtos
         {
             var context = (AppDbContext)validationContext.GetService(typeof(AppDbContext));
             
-            // Verificar se o caixa existe e está aberto
             var caixa = context.Caixas.Find(CaixaId);
             if (caixa == null)
                 yield return new ValidationResult("Caixa não encontrado.", [nameof(CaixaId)]);
             else if (!caixa.Status)
                 yield return new ValidationResult("O caixa está fechado. Não é possível registrar recebimentos.", [nameof(CaixaId)]);
             
-            // Verificar se a venda existe
             var venda = context.Vendas
                 .FirstOrDefault(v => v.Id == VendaId);
             
@@ -61,19 +58,15 @@ namespace GestaoVendasWeb2.Dtos
                 yield return new ValidationResult("Venda não encontrada.", [nameof(VendaId)]);
             else
             {
-                // Carregar recebimentos da venda para calcular valor pendente
                 context.Entry(venda).Collection(v => v.Recebimentos).Load();
                 
-                // Calcular valor pendente
                 var valorTotalPago = venda.Recebimentos.Sum(r => r.Valor);
                 var valorPendente = venda.Valor - valorTotalPago;
                 
-                // Verificar se o valor do recebimento não é maior que o valor pendente
                 if (Valor > valorPendente)
                     yield return new ValidationResult($"Valor do recebimento (R$ {Valor}) maior que o valor pendente (R$ {valorPendente}).", [nameof(Valor)]);
             }
             
-            // Verificar se o funcionário existe
             if (!context.Funcionarios.Any(f => f.Id == FuncionarioId))
                 yield return new ValidationResult("Funcionário não encontrado.", [nameof(FuncionarioId)]);
         }
@@ -101,13 +94,11 @@ namespace GestaoVendasWeb2.Dtos
                 .FirstOrDefault(r => r.Id == Id);
                 
             if (recebimento == null)
-                yield break; // A validação de existência será feita no controller
+                yield break;
             
-            // Verificar se o caixa do recebimento está aberto
             if (!recebimento.Caixa.Status)
                 yield return new ValidationResult("Não é possível modificar um recebimento associado a um caixa fechado.", [nameof(Id)]);
             
-            // Se estiver alterando para outro caixa, verificar se o novo caixa está aberto
             if (CaixaId.HasValue && CaixaId.Value != recebimento.CaixaId)
             {
                 var novoCaixa = context.Caixas.Find(CaixaId.Value);
@@ -117,7 +108,6 @@ namespace GestaoVendasWeb2.Dtos
                     yield return new ValidationResult("O caixa está fechado. Não é possível transferir o recebimento.", [nameof(CaixaId)]);
             }
             
-            // Verificar se o novo valor não excede o valor pendente da venda
             if (Valor.HasValue)
             {
                 var valorTotalAtual = recebimento.Venda.Recebimentos
@@ -130,7 +120,6 @@ namespace GestaoVendasWeb2.Dtos
                     yield return new ValidationResult($"Valor do recebimento (R$ {Valor}) maior que o valor disponível (R$ {valorDisponivel}).", [nameof(Valor)]);
             }
             
-            // Verificar se o funcionário existe
             if (FuncionarioId.HasValue && !context.Funcionarios.Any(f => f.Id == FuncionarioId.Value))
                 yield return new ValidationResult("Funcionário não encontrado.", [nameof(FuncionarioId)]);
         }

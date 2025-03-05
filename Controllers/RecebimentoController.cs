@@ -4,17 +4,26 @@ using GestaoVendasWeb2.DataContexts;
 using GestaoVendasWeb2.Dtos;
 using GestaoVendasWeb2.Models;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GestaoVendasWeb2.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class RecebimentoController(AppDbContext context, IMapper mapper) : ControllerBase
     {
         private readonly AppDbContext _context = context;
         private readonly IMapper _mapper = mapper;
 
+        /// <summary>
+        /// Obter todos os recebimentos
+        /// </summary>
+        /// <returns>Lista de recebimentos</returns>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<RecebimentoDTO>))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<IEnumerable<RecebimentoDTO>>> GetRecebimentos()
         {
             var recebimentos = await _context.Recebimentos
@@ -27,7 +36,15 @@ namespace GestaoVendasWeb2.Controllers
             return Ok(_mapper.Map<List<RecebimentoDTO>>(recebimentos));
         }
 
+        /// <summary>
+        /// Obter recebimento por ID
+        /// </summary>
+        /// <param name="id">ID do recebimento</param>
+        /// <returns>Detalhes do recebimento</returns>
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RecebimentoDTO))]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<RecebimentoDTO>> GetRecebimento(int id)
         {
             var recebimento = await _context.Recebimentos
@@ -43,7 +60,18 @@ namespace GestaoVendasWeb2.Controllers
             return _mapper.Map<RecebimentoDTO>(recebimento);
         }
 
+        /// <summary>
+        /// Registrar novo recebimento
+        /// </summary>
+        /// <param name="recebimentoDto">Dados do recebimento</param>
+        /// <returns>Recebimento criado</returns>
         [HttpPost]
+        [Authorize(Roles = "admin,caixa,gerente")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(RecebimentoDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<RecebimentoCreateDTO>> PostRecebimento(RecebimentoCreateDTO recebimentoDto)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -53,18 +81,15 @@ namespace GestaoVendasWeb2.Controllers
 
                 _context.Recebimentos.Add(recebimento);
 
-                // Atualiza valores do caixa
                 var caixa = await _context.Caixas.FindAsync(recebimentoDto.CaixaId);
                 caixa.ValorCreditos += recebimento.Valor;
                 caixa.CalcularSaldoFinal();
 
                 await _context.SaveChangesAsync();
                 
-                // Recarregar o recebimento com seus relacionamentos
                 await _context.Entry(recebimento).Reference(r => r.Caixa).LoadAsync();
                 await _context.Entry(recebimento).Reference(r => r.Funcionario).LoadAsync();
                 
-                // Carregar a venda com seus recebimentos para calcular o valor restante
                 await _context.Entry(recebimento).Reference(r => r.Venda).LoadAsync();
                 await _context.Entry(recebimento.Venda).Collection(v => v.Recebimentos).LoadAsync();
                 
@@ -79,16 +104,28 @@ namespace GestaoVendasWeb2.Controllers
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                // Improve error message with inner exception details
                 string errorDetails = ex.InnerException != null ? $" - Inner: {ex.InnerException.Message}" : "";
                 return StatusCode(500, $"Erro ao registrar recebimento: {ex.Message}{errorDetails}");
             }
         }
 
+        /// <summary>
+        /// Atualizar recebimento
+        /// </summary>
+        /// <param name="id">ID do recebimento</param>
+        /// <param name="recebimentoDto">Dados atualizados</param>
+        /// <returns>Recebimento atualizado</returns>
         [HttpPatch("{id}")]
+        [Authorize(Roles = "admin,gerente")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(RecebimentoDTO))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> PatchRecebimento(int id, RecebimentoUpdateDTO recebimentoDto)
         {
-            recebimentoDto.Id = id; // Garantir que o ID está definido para validação
+            recebimentoDto.Id = id;
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -105,33 +142,25 @@ namespace GestaoVendasWeb2.Controllers
                 if (!recebimento.Caixa.Status)
                     return BadRequest("Não é possível alterar um recebimento de um caixa fechado.");
 
-                // Valores originais para atualização do caixa
                 var valorAntigo = recebimento.Valor;
                 var caixaAntigo = recebimento.CaixaId;
 
-                // Aplicar apenas as alterações fornecidas
                 _mapper.Map(recebimentoDto, recebimento);
 
-                // Se o valor foi alterado ou o caixa foi alterado, atualizar os saldos
                 if (recebimentoDto.Valor.HasValue || recebimentoDto.CaixaId.HasValue)
                 {
-                    // Se mudou o caixa
                     if (recebimentoDto.CaixaId.HasValue && recebimentoDto.CaixaId.Value != caixaAntigo)
                     {
-                        // Atualizar saldo do caixa antigo (remover o valor)
                         var caixaAntigoObj = await _context.Caixas.FindAsync(caixaAntigo);
                         caixaAntigoObj.ValorCreditos -= valorAntigo;
                         caixaAntigoObj.CalcularSaldoFinal();
 
-                        // Atualizar saldo do novo caixa (adicionar o valor)
                         var novoCaixa = await _context.Caixas.FindAsync(recebimentoDto.CaixaId.Value);
                         novoCaixa.ValorCreditos += recebimento.Valor;
                         novoCaixa.CalcularSaldoFinal();
                     }
-                    // Se apenas o valor mudou
                     else if (recebimentoDto.Valor.HasValue)
                     {
-                        // Atualizar saldo do mesmo caixa com a diferença
                         recebimento.Caixa.ValorCreditos = recebimento.Caixa.ValorCreditos - valorAntigo + recebimento.Valor;
                         recebimento.Caixa.CalcularSaldoFinal();
                     }
@@ -139,7 +168,6 @@ namespace GestaoVendasWeb2.Controllers
 
                 await _context.SaveChangesAsync();
                 
-                // Recarregar o recebimento para a resposta
                 await _context.Entry(recebimento).Reference(r => r.Funcionario).LoadAsync();
                 
                 await transaction.CommitAsync();
@@ -153,7 +181,19 @@ namespace GestaoVendasWeb2.Controllers
             }
         }
 
+        /// <summary>
+        /// Excluir recebimento
+        /// </summary>
+        /// <param name="id">ID do recebimento</param>
+        /// <returns>Sem conteúdo</returns>
         [HttpDelete("{id}")]
+        [Authorize(Roles = "admin")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> DeleteRecebimento(int id)
         {
             using var transaction = await _context.Database.BeginTransactionAsync();
@@ -169,7 +209,6 @@ namespace GestaoVendasWeb2.Controllers
                 if (!recebimento.Caixa.Status)
                     return BadRequest("Não é possível excluir um recebimento de um caixa fechado.");
 
-                // Atualiza valores do caixa
                 recebimento.Caixa.ValorCreditos -= recebimento.Valor;
                 recebimento.Caixa.CalcularSaldoFinal();
 
@@ -184,6 +223,31 @@ namespace GestaoVendasWeb2.Controllers
                 await transaction.RollbackAsync();
                 return StatusCode(500, $"Erro ao excluir recebimento: {ex.Message}");
             }
+        }
+        
+        /// <summary>
+        /// Obter recebimentos por venda
+        /// </summary>
+        /// <param name="vendaId">ID da venda</param>
+        /// <returns>Lista de recebimentos da venda</returns>
+        [HttpGet("venda/{vendaId}")]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<RecebimentoDTO>))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<IEnumerable<RecebimentoDTO>>> GetRecebimentosByVenda(int vendaId)
+        {
+            var venda = await _context.Vendas
+                .Include(v => v.Recebimentos)
+                    .ThenInclude(r => r.Caixa)
+                .Include(v => v.Recebimentos)
+                    .ThenInclude(r => r.Funcionario)
+                .FirstOrDefaultAsync(v => v.Id == vendaId);
+
+            if (venda == null)
+                return NotFound($"Venda com ID {vendaId} não encontrada.");
+
+            var recebimentos = venda.Recebimentos.ToList();
+            return Ok(_mapper.Map<List<RecebimentoDTO>>(recebimentos));
         }
     }
 }

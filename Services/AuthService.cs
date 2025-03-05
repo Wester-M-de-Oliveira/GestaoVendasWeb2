@@ -31,7 +31,6 @@ namespace GestaoVendasWeb2.Services
                 return null;
             }
             
-            // Verify password using BCrypt
             bool isPasswordValid = BC.Verify(loginDto.Password, user.PasswordHash);
 
             if (!isPasswordValid)
@@ -39,7 +38,6 @@ namespace GestaoVendasWeb2.Services
                 return null;
             }
 
-            // Update last access time
             user.UltimoAcesso = DateTime.Now;
             await _context.SaveChangesAsync();
 
@@ -50,7 +48,7 @@ namespace GestaoVendasWeb2.Services
         {
             if (await _context.Usuarios.AnyAsync(u => u.Username == registerDto.Username))
             {
-                return null; // Username already exists
+                return null;
             }
 
             var passwordHash = BC.HashPassword(registerDto.Password);
@@ -83,9 +81,11 @@ namespace GestaoVendasWeb2.Services
                 new Claim("UserId", user.Id.ToString())
             };
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "O58D8T3EW5OMuQORYQZm6Uh2qwFttIu6"));
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
+                _configuration["Jwt:Key"] ?? "O58D8T3EW5OMuQORYQZm6Uh2qwFttIu6"));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = DateTime.Now.AddHours(24);
+            var expires = DateTime.Now.AddHours(
+                Convert.ToDouble(_configuration["Jwt:DurationInHours"] ?? "24"));
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
@@ -94,6 +94,8 @@ namespace GestaoVendasWeb2.Services
                 expires: expires,
                 signingCredentials: creds
             );
+
+            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
 
             var userDto = new UserDto
             {
@@ -109,7 +111,7 @@ namespace GestaoVendasWeb2.Services
 
             return new TokenResponseDto
             {
-                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                Token = tokenString,
                 Expiration = expires,
                 User = userDto
             };

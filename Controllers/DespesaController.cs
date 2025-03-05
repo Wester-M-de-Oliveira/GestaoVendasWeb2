@@ -4,11 +4,13 @@ using GestaoVendasWeb2.DataContexts;
 using GestaoVendasWeb2.Dtos;
 using GestaoVendasWeb2.Models;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GestaoVendasWeb2.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize]
 public class DespesaController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -83,7 +85,6 @@ public class DespesaController : ControllerBase
             if (despesa == null)
                 return NotFound($"Despesa com ID {id} não encontrada.");
 
-            // Only check if fornecedor exists if it was provided in the update
             if (despesaDto.FornecedorId.HasValue)
             {
                 var fornecedorExists = await _context.Fornecedores.AnyAsync(f => f.Id == despesaDto.FornecedorId);
@@ -91,7 +92,6 @@ public class DespesaController : ControllerBase
                     return BadRequest($"Fornecedor com ID {despesaDto.FornecedorId} não encontrado.");
             }
 
-            // Map only the properties that were provided
             _mapper.Map(despesaDto, despesa);
             
             _context.Entry(despesa).State = EntityState.Modified;

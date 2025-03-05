@@ -8,7 +8,7 @@ using System.Security.Claims;
 using BC = BCrypt.Net.BCrypt;
 using System.Text;
 
-namespace ApiGestaoFacil.Controllers
+namespace GestaoVendasWeb2.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -46,7 +46,7 @@ namespace ApiGestaoFacil.Controllers
         /// <param name="registerDto">Dados do novo usuário</param>
         /// <returns>Token JWT para autenticação</returns>
         [HttpPost("register")]
-        // [Authorize(Roles = "admin")]
+        [Authorize(Roles = "admin")]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TokenResponseDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]

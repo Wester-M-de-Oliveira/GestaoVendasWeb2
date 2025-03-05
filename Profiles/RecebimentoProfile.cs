@@ -15,7 +15,6 @@ namespace GestaoVendasWeb2.Profiles
 
             CreateMap<RecebimentoDTO, Recebimento>();
             
-            // Map for RecebimentoCreateDTO with explicit property mapping
             CreateMap<RecebimentoCreateDTO, Recebimento>()
                 .ForMember(dest => dest.Data, opt => opt.MapFrom(src => DateTime.Now))
                 .ForMember(dest => dest.Valor, opt => opt.MapFrom(src => src.Valor))
@@ -23,12 +22,10 @@ namespace GestaoVendasWeb2.Profiles
                 .ForMember(dest => dest.VendaId, opt => opt.MapFrom(src => src.VendaId))
                 .ForMember(dest => dest.FuncionarioId, opt => opt.MapFrom(src => src.FuncionarioId));
                 
-            // Map for RecebimentoUpdateDTO with conditional mapping
             CreateMap<RecebimentoUpdateDTO, Recebimento>()
                 .ForAllMembers(opts => opts.Condition(
                     (src, dest, srcMember) => srcMember != null));
 
-            // Maps for related entities
             CreateMap<Caixa, CaixaDTO>();
             CreateMap<Venda, VendaDTO>();
             CreateMap<Funcionario, FuncionarioDTO>();

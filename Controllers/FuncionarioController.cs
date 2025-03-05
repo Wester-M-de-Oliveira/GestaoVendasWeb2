@@ -3,11 +3,13 @@ using GestaoVendasWeb2.Dtos;
 using GestaoVendasWeb2.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GestaoVendasWeb2.Controllers
 {
     [Route("funcionarios")]
     [ApiController]
+    [Authorize]
     public class FuncionarioController(AppDbContext context) : Controller
     {
         private readonly AppDbContext _context = context;

@@ -3,12 +3,15 @@ using GestaoVendasWeb2.Dtos;
 using GestaoVendasWeb2.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GestaoVendasWeb2.Controllers 
 {
-    [Route("fornecedores")]
+    [Route("api/[controller]")]
     [ApiController]
-    public class FornecedorController(AppDbContext context) : Controller
+    [Authorize]
+    public class FornecedorController(AppDbContext context) : ControllerBase
     {
         private readonly AppDbContext _context = context;
 

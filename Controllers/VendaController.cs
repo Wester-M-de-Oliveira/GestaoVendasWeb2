@@ -1,14 +1,16 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;  // Make sure this is present
+using Microsoft.EntityFrameworkCore;
 using GestaoVendasWeb2.DataContexts;
 using GestaoVendasWeb2.Dtos;
 using GestaoVendasWeb2.Models;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GestaoVendasWeb2.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class VendaController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -61,21 +63,19 @@ namespace GestaoVendasWeb2.Controllers
             {
                 var venda = _mapper.Map<Venda>(vendaDto);
                 
-                // Atualizar estoque dos produtos
                 foreach (var item in venda.ItensVendas)
                 {
                     var produto = await _context.Produtos.FindAsync(item.ProdutoId);
                     if (produto != null)
                     {
                         produto.QuantidadeEstoque -= item.Quantidade;
-                        item.Valor = (double)produto.Valor; // Garantir que o valor seja o preço de venda do produto
+                        item.Valor = (double)produto.Valor;
                     }
                 }
 
                 _context.Vendas.Add(venda);
                 await _context.SaveChangesAsync();
                 
-                // Recarregar a venda com todos os relacionamentos para a resposta
                 var vendaCompleta = await _context.Vendas
                     .Include(v => v.ItensVendas)
                         .ThenInclude(iv => iv.Produto)
@@ -100,7 +100,6 @@ namespace GestaoVendasWeb2.Controllers
         {   
             try
             {               
-                // First check if the venda exists directly in the controller
                 var venda = await _context.Vendas
                     .Include(v => v.ItensVendas)
                     .FirstOrDefaultAsync(v => v.Id == id);
@@ -113,10 +112,8 @@ namespace GestaoVendasWeb2.Controllers
                 using var transaction = await _context.Database.BeginTransactionAsync();
                 try
                 {
-                    // Only update ItensVenda if explicitly provided in the DTO
                     if (vendaDto.UpdateItems)
                     {
-                        // Restore product stock before updating
                         foreach (var item in venda.ItensVendas)
                         {
                             var produto = await _context.Produtos.FindAsync(item.ProdutoId);
@@ -124,10 +121,8 @@ namespace GestaoVendasWeb2.Controllers
                                 produto.QuantidadeEstoque += item.Quantidade;
                         }
 
-                        // Remove existing items
                         _context.ItensVendas.RemoveRange(venda.ItensVendas);
                         
-                        // Add new items
                         venda.ItensVendas.Clear();
                         foreach (var itemDto in vendaDto.ItensVendas)
                         {
@@ -143,20 +138,16 @@ namespace GestaoVendasWeb2.Controllers
                                 };
                                 venda.ItensVendas.Add(novoItem);
                                 
-                                // Update stock
                                 produto.QuantidadeEstoque -= itemDto.Quantidade;
                             }
                         }
                         
-                        // Recalculate total value if items were updated
                         venda.CalcularValorTotal();
                     }
 
-                    // Update basic properties
                     if (vendaDto.Desconto.HasValue)
                     {
                         venda.Desconto = vendaDto.Desconto;
-                        // If items weren't updated but discount was, recalculate total
                         if (!vendaDto.UpdateItems)
                             venda.CalcularValorTotal();
                     }
@@ -175,7 +166,6 @@ namespace GestaoVendasWeb2.Controllers
 
                     await _context.SaveChangesAsync();
                     
-                    // Reload the complete sale for the response
                     var vendaCompleta = await _context.Vendas
                         .Include(v => v.ItensVendas)
                             .ThenInclude(iv => iv.Produto)
@@ -216,13 +206,11 @@ namespace GestaoVendasWeb2.Controllers
                     return NotFound($"Venda com ID {id} não encontrada.");
                 }
                 
-                // Verificar se já existem recebimentos
                 if (venda.Recebimentos.Any())
                 {
                     return BadRequest("Não é possível excluir uma venda que já possui recebimentos registrados.");
                 }
 
-                // Restaurar o estoque dos produtos
                 foreach (var item in venda.ItensVendas)
                 {
                     var produto = await _context.Produtos.FindAsync(item.ProdutoId);

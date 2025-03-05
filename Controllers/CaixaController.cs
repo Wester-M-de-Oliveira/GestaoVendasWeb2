@@ -4,11 +4,13 @@ using GestaoVendasWeb2.DataContexts;
 using GestaoVendasWeb2.Dtos;
 using GestaoVendasWeb2.Models;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace GestaoVendasWeb2.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CaixaController(AppDbContext context, IMapper mapper) : ControllerBase
     {
         private readonly AppDbContext _context = context;
@@ -59,7 +61,6 @@ namespace GestaoVendasWeb2.Controllers
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
             {
-                // Verifica se já existe um caixa aberto
                 var caixaAberto = await _context.Caixas.AnyAsync(c => c.Status);
                 if (caixaAberto)
                     return BadRequest("Já existe um caixa aberto.");

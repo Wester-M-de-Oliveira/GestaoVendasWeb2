@@ -16,7 +16,7 @@ namespace GestaoVendasWeb2.Models
 
         [Required]
         [Column("valor")]
-        public decimal Valor { get; set; } // Alterado para decimal
+        public decimal Valor { get; set; }
 
         [Required]
         [Column("produto_id")]

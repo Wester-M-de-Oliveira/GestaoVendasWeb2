@@ -9,7 +9,7 @@ namespace GestaoVendasWeb2.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    // [Authorize]
+    [Authorize]
     public class UsuarioController : ControllerBase
     {
         private readonly AppDbContext _context;

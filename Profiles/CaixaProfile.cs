@@ -8,13 +8,10 @@ namespace GestaoVendasWeb2.Profiles
     {
         public MappingProfile()
         {
-            // Map from Model to DTO
             CreateMap<Caixa, CaixaDTO>();
             
-            // Map from CreateUpdateDTO to Model
             CreateMap<CaixaCreateUpdateDTO, Caixa>();
             
-            // Map from Model to CreateUpdateDTO
             CreateMap<Caixa, CaixaCreateUpdateDTO>();
         }
     }
