@@ -7,6 +7,8 @@ using System.Text;
 using System.Text.Json.Serialization;
 using AutoMapper;
 using GestaoVendasWeb2.Profiles;
+using GestaoVendasWeb2.Services;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,7 +29,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? string.Empty))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "O58D8T3EW5OMuQORYQZm6Uh2qwFttIu6"))
         };
     });
 
@@ -40,8 +42,13 @@ builder.Services.AddSwaggerGen(options =>
     options.SwaggerDoc("v1", new OpenApiInfo
     {
         Version = "v1",
-        Title = "GestaoVendasWeb",
-        Description = "API de consumo para aplicaÁ„o Vendas"
+        Title = "Gest√£o de Vendas API",
+        Description = "API para gerenciamento de vendas, compras, produtos e clientes",
+        Contact = new OpenApiContact
+        {
+            Name = "Suporte",
+            Email = "suporte@gestaodevendas.com"
+        }
     });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
@@ -51,7 +58,9 @@ builder.Services.AddSwaggerGen(options =>
         Scheme = "Bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "CabeÁalho de autorizaÁ„o JWT. Usando esquema de Bearer \r\n\r\n Digite 'Bearer' seguido do token"
+        Description = "JWT Authorization header usando o esquema Bearer. \r\n\r\n " +
+                      "Digite 'Bearer' [espa√ßo] e seu token.\r\n\r\n" +
+                      "Exemplo: \"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\""
     });
 
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -68,20 +77,44 @@ builder.Services.AddSwaggerGen(options =>
             Array.Empty<string>()
         }
     });
+
+    // Include XML Comments
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    if (File.Exists(xmlPath))
+    {
+        options.IncludeXmlComments(xmlPath);
+    }
 });
+
+builder.Services.AddScoped<AuthService>();
 
 var connectionString = builder.Configuration.GetConnectionString("default");
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
 );
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Gest√£o de Vendas API v1"));
 }
+
+app.UseHttpsRedirection();
+
+app.UseCors("AllowAll");
 
 app.UseAuthentication();
 app.UseAuthorization();

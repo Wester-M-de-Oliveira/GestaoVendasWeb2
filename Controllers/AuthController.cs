@@ -1,60 +1,64 @@
 ﻿using GestaoVendasWeb2.Dtos;
+using GestaoVendasWeb2.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using BC = BCrypt.Net.BCrypt;
 using System.Text;
 
 namespace ApiGestaoFacil.Controllers
 {
-    [Route("auth")]
+    [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IConfiguration _configuration;
+        private readonly AuthService _authService;
 
-        public AuthController(IConfiguration configuration)
+        public AuthController(AuthService authService)
         {
-            _configuration = configuration;
+            _authService = authService;
         }
 
+        /// <summary>
+        /// Autenticar usuário
+        /// </summary>
+        /// <param name="loginDto">Credenciais de login</param>
+        /// <returns>Token JWT para autenticação</returns>
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginDto user)
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(TokenResponseDto))]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            if (IsValidUser(user))
+            var result = await _authService.AuthenticateAsync(loginDto);
+            if (result == null)
             {
-                var token = GenerateJwtToken(user.Username);
-                return Ok(new { token });
+                return Unauthorized(new { message = "Usuário ou senha inválidos" });
             }
 
-            return Unauthorized(new { message = "Usuário ou senha inválidos" });
-        }
-        private bool IsValidUser(LoginDto user)
-        {
-            return user.Username == "admin" && user.Password == "password";
+            return Ok(result);
         }
 
-        private string GenerateJwtToken(string username)
+        /// <summary>
+        /// Registrar novo usuário
+        /// </summary>
+        /// <param name="registerDto">Dados do novo usuário</param>
+        /// <returns>Token JWT para autenticação</returns>
+        [HttpPost("register")]
+        // [Authorize(Roles = "admin")]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(TokenResponseDto))]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            var claims = new[]
+            var result = await _authService.RegisterAsync(registerDto);
+            if (result == null)
             {
-                new Claim(JwtRegisteredClaimNames.Sub, username),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-                new Claim(ClaimTypes.Role, "admin")
-            };
+                return BadRequest(new { message = "Nome de usuário já existe" });
+            }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "O58D8T3EW5OMuQORYQZm6Uh2qwFttIu6"));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1), // Alterei aqui para o token expirar 1 hr
-                signingCredentials: creds);
-
-            return new JwtSecurityTokenHandler().WriteToken(token);
+            return CreatedAtAction(nameof(Login), result);
         }
     }
 }

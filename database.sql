@@ -5764,3 +5764,20 @@ create table Pagamento (
     foreign key (compra_id) references Compra (id),
     foreign key (funcionario_id) references Funcionario (id)
 );
+
+create table Usuario (
+    id int not null primary key auto_increment,
+    username varchar(50) not null,
+    password_hash varchar(255) not null,
+    nome varchar(100) not null,
+    email varchar(100),
+    role varchar(50) not null default 'user',
+    ativo boolean not null default true,
+    data_criacao datetime not null default CURRENT_TIMESTAMP,
+    ultimo_acesso datetime
+);
+
+INSERT INTO Usuario (username, password_hash, nome, role) 
+VALUES ('admin', '$2a$11$0kxHJZTarjnmNS35QOAKD..Rbl3yH6nb1pjXzmVreYuVr3v18x7Hm', 'Administrador', 'admin');
+-- Note: The password_hash corresponds to "admin123" hashed with bcrypt
+-- Senha admin123

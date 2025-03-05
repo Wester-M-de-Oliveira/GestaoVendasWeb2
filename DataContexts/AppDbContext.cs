@@ -23,6 +23,7 @@ namespace GestaoVendasWeb2.DataContexts
         public DbSet<Recebimento> Recebimentos { get; set; }
         public DbSet<Despesa> Despesas { get; set; }
         public DbSet<Pagamento> Pagamentos { get; set; }
+        public DbSet<Usuario> Usuarios { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
